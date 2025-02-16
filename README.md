@@ -1,6 +1,4 @@
-![Logo Nomad](https://upload.wikimedia.org/wikipedia/commons/0/0a/Nomad-fintech-amarelo.svg)
-
-# Nomad code challenge
+# Code challenge
 
 Este projeto consiste em implementar um leitor de log de um jogo de tiro em primeira pessoa.
 
