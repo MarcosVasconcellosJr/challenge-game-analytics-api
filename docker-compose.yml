@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  postgres:
+    container_name: nomad-game-postgres
+    image: postgres
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: nomad-game-usr
+      POSTGRES_PASSWORD: nomad-game-admin
+      POSTGRES_DB: nomad-game
+      PGDATA: /data/postgres
+    volumes:
+      - ./nomad-game-data/pg:/data/postgres
+
+  redis:
+    container_name: nomad-game-cache
+    image: redis:latest
+    command: redis-server
+    ports:
+      - 6379:6379
+    networks:
+      - redis-network
+    volumes:
+      - ./nomad-game-data/redis:/data
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    platform: linux/amd64
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+      - HTTP_USER=admin
+      - HTTP_PASSWORD=admin
+    ports:
+      - 8081:8081
+    networks:
+      - redis-network
+    depends_on:
+      - redis
+
+volumes:
+  nomad-game-data:
+
+networks:
+  redis-network:
+    driver: bridge

@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "gruntfuggly.todo-tree",
+    "wayou.vscode-todo-highlight",
+    "ms-azuretools.vscode-docker",
+    "dbaeumer.vscode-eslint",
+    "prisma.prisma",
+    "esbenp.prettier-vscode",
+    "yzhang.markdown-all-in-one"
+  ]
+}
