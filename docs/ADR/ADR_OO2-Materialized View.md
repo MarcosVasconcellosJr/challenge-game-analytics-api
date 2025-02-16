@@ -2,18 +2,17 @@
 
 ## Contexto
 
-Precisamos armazenar grandes volumes de dados prontos para serem consumidos como estatística, podendo reprocessar, criar visões rápidas e olhando sempre aos dados de origem com alta escalabilidade.
+Precisamos criar views que sejam performáticas agrupando dados de diversas tabelas para fornecer estatísticas globais de partidas e jogadores.
 
 ## Decisão
 
-Optamos pelo PostgreSQL devido à sua flexibilidade, capacidade de escalar verticalmente (dado o contexto analítico) e suportar VIEWS MATERIALIZADAS.
+Optamos por criar VIEWS MATERIALIZADAS no PostgreSQL para facilitar o gerenciamento da atualização periódica dos dados e controle ACID.
 
 ## Alternativas Consideradas
 
-- MySQL: Exige também esquemas rígidos, tornando a iteração mais lenta, além de ser pouco conhecido pela equipe de desenvolvimento.
-- Cassandra: Alta escalabilidade, mas complexidade operacional maior.
+- NestJS: A própria aplicação calcular os rankings globais, simplificaria testes unitários, mas, perde muito em performance e controle de dados sujos.
 
 ## Consequências
 
-- Pode haver desafios na modelagem de dados relacionais.
-- Mudanças de requisitos podem mudar drasticamente a modelagem dos dados.
+- Equipe precisa tomar cuidado com a frequência de atualização da VIEW MATERIALIZADA;
+- Mudanças de requisitos vão necessitar de alterações na VIEW, que pode ser gerida pelo ORM da aplicação em forma de migrations.

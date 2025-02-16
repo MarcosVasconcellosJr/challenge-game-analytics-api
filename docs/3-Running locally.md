@@ -19,13 +19,13 @@ Para rodar os testes, rode o seguinte comando
 Clone o projeto
 
 ```bash
-  git clone https://github.com/MarcosVasconcellosJr/nomad-game-analytics-api.git
+  git clone https://github.com/MarcosVasconcellosJr/challenge-game-analytics-api.git
 ```
 
 Entre no diretório do projeto
 
 ```bash
-  cd nomad-game-analytics-api
+  cd challenge-game-analytics-api
 ```
 
 Instale as dependências

@@ -2,20 +2,20 @@ version: '3.8'
 
 services:
   postgres:
-    container_name: nomad-game-postgres
+    container_name: game-postgres
     image: postgres
     ports:
       - 5432:5432
     environment:
-      POSTGRES_USER: nomad-game-usr
-      POSTGRES_PASSWORD: nomad-game-admin
-      POSTGRES_DB: nomad-game
+      POSTGRES_USER: game-usr
+      POSTGRES_PASSWORD: game-admin
+      POSTGRES_DB: game
       PGDATA: /data/postgres
     volumes:
-      - ./nomad-game-data/pg:/data/postgres
+      - ./game-data/pg:/data/postgres
 
   redis:
-    container_name: nomad-game-cache
+    container_name: game-cache
     image: redis:latest
     command: redis-server
     ports:
@@ -23,7 +23,7 @@ services:
     networks:
       - redis-network
     volumes:
-      - ./nomad-game-data/redis:/data
+      - ./game-data/redis:/data
 
   redis-commander:
     image: rediscommander/redis-commander:latest
@@ -40,7 +40,7 @@ services:
       - redis
 
 volumes:
-  nomad-game-data:
+  game-data:
 
 networks:
   redis-network:
