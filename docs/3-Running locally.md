@@ -1,11 +1,3 @@
-# Nesta página:
-
-- [Nesta página:](#nesta-página)
-  - [Rodando os testes](#rodando-os-testes)
-  - [Rodando localmente](#rodando-localmente)
-- [Navegação](#navegação)
-
-
 ## Rodando os testes
 
 Para rodar os testes, rode o seguinte comando
@@ -40,8 +32,8 @@ Inicie o servidor
   yarn start
 ```
 
-
 # Navegação
 
-🔗 [Ir para página anterior: Arquitetura](./2-Architecture.md)
-🔗 [Ir para próxima página: FIXME:](./1-Getting%20Started.md)
+🔙 [Voltar: Arquitetura](./2-Architecture.md)
+
+🔜 [Avançar: Roadmap](./4-Roadmap.md)

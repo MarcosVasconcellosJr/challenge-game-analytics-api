@@ -17,3 +17,5 @@ Optamos pelo PostgreSQL devido à sua flexibilidade, capacidade de escalar verti
 
 - Pode haver desafios na modelagem de dados relacionais.
 - Mudanças de requisitos podem mudar drasticamente a modelagem dos dados.
+
+🔙 [Voltar: Arquitetura](../2-Architecture.md)

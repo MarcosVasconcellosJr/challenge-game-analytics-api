@@ -18,7 +18,7 @@ Este projeto consiste em implementar um leitor de log de um jogo de tiro em prim
 
 - Implementação de consumo de filas SQS com tratamento de DLQ/Visibility;
 
-- Controle de partidas processadas no DynamoDB - LockAsync distribuído;
+- Controle de `arquivos & partidas` já processadas usando o Redis - Distribuited Lock;
 
 - Leitura do arquivo de logs usando nodeJS streams para maior performance.
 

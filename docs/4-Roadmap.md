@@ -15,3 +15,9 @@ Opção 2 - Mudar de arquitetura:
 - Através do airflow usando DAG's de controle de fluxo, chamar um fluxo EMR da AWS para processar os dados "instantaneamente";
 
 - EMR (Elastic MapReduce) é um serviço da Amazon Web Services (AWS) que permite processar, analisar e transformar grandes volumes de dados. Ele é uma plataforma de big data que usa o Apache Hadoop e outros frameworks;
+
+# Navegação
+
+🔙 [Voltar: Running locally](./3-Running%20locally.md)
+
+🔜 [Avançar: FIXME:](./)
