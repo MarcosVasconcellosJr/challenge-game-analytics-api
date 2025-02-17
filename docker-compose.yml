@@ -2,20 +2,20 @@ version: '3.8'
 
 services:
   postgres:
-    container_name: game-postgres
-    image: postgres
+    container_name: game-db-postgres
+    image: bitnami/postgresql:latest
     ports:
       - 5432:5432
     environment:
-      POSTGRES_USER: game-usr
-      POSTGRES_PASSWORD: game-admin
-      POSTGRES_DB: game
+      POSTGRES_DB: game-analytics
+      POSTGRES_USER: docker
+      POSTGRES_PASSWORD: docker
       PGDATA: /data/postgres
     volumes:
       - ./game-data/pg:/data/postgres
 
   redis:
-    container_name: game-cache
+    container_name: game-cache-redis
     image: redis:latest
     command: redis-server
     ports:
@@ -26,6 +26,7 @@ services:
       - ./game-data/redis:/data
 
   redis-commander:
+    container_name: game-redis-gui
     image: rediscommander/redis-commander:latest
     platform: linux/amd64
     environment:
@@ -38,6 +39,18 @@ services:
       - redis-network
     depends_on:
       - redis
+
+  seq:
+    container_name: game-seq-monitoring
+    image: datalust/seq:latest
+    restart: always
+    ports:
+      - "5341:80"
+      - "5342:5342" # OTEL Exporter
+    environment:
+      - ACCEPT_EULA=Y
+    volumes:
+      - ./game-data/seq:/data
 
 volumes:
   game-data:

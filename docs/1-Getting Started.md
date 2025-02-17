@@ -2,7 +2,7 @@
 
 - **Docker desktop ou WSL:** [Clique aqui para instalar o docker](https://docs.docker.com/engine/install/)
 
-- **NodeJS:** [Clique aqui para instalar o docker](https://docs.docker.com/engine/install/)
+- **NodeJS:** [Clique aqui para instalar o node](https://nodejs.org/pt/download)
 
 ## Stack utilizada
 
