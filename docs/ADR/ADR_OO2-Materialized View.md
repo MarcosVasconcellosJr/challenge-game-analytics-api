@@ -16,3 +16,7 @@ Optamos por criar VIEWS MATERIALIZADAS no PostgreSQL para facilitar o gerenciame
 
 - Equipe precisa tomar cuidado com a frequência de atualização da VIEW MATERIALIZADA;
 - Mudanças de requisitos vão necessitar de alterações na VIEW, que pode ser gerida pelo ORM da aplicação em forma de migrations.
+
+---
+
+🔙 [Voltar: Arquitetura](../2-Architecture.md)
