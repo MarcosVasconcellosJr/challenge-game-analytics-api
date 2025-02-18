@@ -2,6 +2,7 @@
   "compilerOptions": {
     "module": "commonjs",
     "removeComments": true,
+    "useUnknownInCatchVariables": false,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,

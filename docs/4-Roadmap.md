@@ -1,6 +1,7 @@
 ## Roadmap
 
-FIXME:
+1) Separar consumer de novos arquivos da api;
+
 
 ## Como escalar essa solução ainda mais?
 
