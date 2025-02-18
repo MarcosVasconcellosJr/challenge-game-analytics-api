@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { envSchema } from 'src/infra/env/env'
 import { EnvModule } from 'src/infra/env/env.module'
-import { AppController } from 'src/infra/http/app.controller'
-import { UploadController } from 'src/infra/http/log.controller'
+import { AppController } from '@/application/app.controller'
+import { UploadController } from '@/application/log.controller'
 import { StorageModule } from 'src/infra/storage/storage.module'
-import { QueueConsumerModule } from 'src/infra/queue-consumer/queue-consumer.module'
+import { QueueConsumerModule } from '@/application/queue-consumer/queue-consumer.module'
 
 @Module({
   controllers: [AppController, UploadController],
