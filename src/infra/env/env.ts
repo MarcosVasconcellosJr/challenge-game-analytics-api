@@ -16,6 +16,9 @@ export const envSchema = z.object({
   AWS_SQS_QUEUE_URL_MATCH: z.string(),
   AWS_SQS_QUEUE_URL_FILE: z.string(),
   FEATURE_FLAG_CONSUMERS_ENABLED: z.coerce.boolean(),
+  SEQ_SERVER_URL: z.string(),
+  SEQ_API_KEY: z.string().optional(),
+  SEQ_SERVICE_NAME: z.string(),
 })
 
 export type Env = z.infer<typeof envSchema>

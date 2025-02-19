@@ -1,5 +1,7 @@
-import { Module } from '@nestjs/common'
-import { ConfigModule } from '@nestjs/config'
+import { Module, Logger } from '@nestjs/common'
+import { ConfigModule, ConfigService } from '@nestjs/config'
+import { SeqLoggerModule } from '@jasonsoft/nestjs-seq'
+
 import { envSchema } from 'src/infra/env/env'
 import { EnvModule } from 'src/infra/env/env.module'
 import { AppController } from '@/application/http/controllers/app.controller'
@@ -15,10 +17,22 @@ import { LogParserService } from 'src/infra/service/log-parser.service'
       validate: (env) => envSchema.parse(env),
       isGlobal: true,
     }),
+    SeqLoggerModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        serverUrl: configService.get('SEQ_SERVER_URL'),
+        // apiKey: configService.get('SEQ_API_KEY'),
+        extendMetaProperties: {
+          serviceName: configService.get('SEQ_SERVICE_NAME'),
+        },
+        logLevels: ['debug', 'info', 'error'],
+      }),
+      inject: [ConfigService],
+    }),
     EnvModule,
     StorageModule,
     QueueConsumerModule,
   ],
-  providers: [LogParserService],
+  providers: [Logger, LogParserService],
 })
 export class AppModule {}

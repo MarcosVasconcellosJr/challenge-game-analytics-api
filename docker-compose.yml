@@ -62,6 +62,21 @@ services:
     depends_on:
       - redis
 
+
+  seq:
+    container_name: game-seq-monitoring
+    image: datalust/seq:latest
+    restart: always
+    ports:
+      - "5341:80"
+      - "5342:5342" # OTEL Exporter
+    environment:
+      - ACCEPT_EULA=Y
+    volumes:
+      - ./data/seq:/data
+    networks:
+      - game-network
+
 volumes:
   data:
   localstack_volume:
