@@ -5,4 +5,10 @@
     "source.formatDocument",
     "source.fixAll.eslint"
   ],
+  "debug.javascript.autoAttachFilter": "smart",
+  "debug.javascript.autoAttachSmartPattern": [
+    "!**/{node_modules,npm-global,.yarn,.nvm}/**",
+    "**/$KNOWN_TOOLS$/**",
+    "'**/node_modules/@nrwl/node/**'"
+  ],
 }
