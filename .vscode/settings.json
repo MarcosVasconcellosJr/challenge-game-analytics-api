@@ -11,4 +11,7 @@
     "**/$KNOWN_TOOLS$/**",
     "'**/node_modules/@nrwl/node/**'"
   ],
+  "[prisma]": {
+    "editor.defaultFormatter": "Prisma.prisma"
+  },
 }

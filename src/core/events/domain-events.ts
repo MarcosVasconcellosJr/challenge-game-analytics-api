@@ -1,5 +1,4 @@
 import { AggregateRoot } from '../entities/aggregate-root'
-import { UniqueEntityID } from '../entities/unique-entity-id'
 import { DomainEvent } from './domain-event'
 
 type DomainEventCallback = (event: unknown) => void
@@ -31,12 +30,12 @@ export class DomainEvents {
   }
 
   private static findMarkedAggregateByID(
-    id: UniqueEntityID,
+    id: string,
   ): AggregateRoot<unknown> | undefined {
-    return this.markedAggregates.find((aggregate) => aggregate.id.equals(id))
+    return this.markedAggregates.find((aggregate) => aggregate.id === id)
   }
 
-  public static dispatchEventsForAggregate(id: UniqueEntityID) {
+  public static dispatchEventsForAggregate(id: string) {
     const aggregate = this.findMarkedAggregateByID(id)
 
     if (aggregate) {

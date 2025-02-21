@@ -1,7 +1,7 @@
 import {
-  LogParserService,
+  LogFileHandler,
   ProcessingResult,
-} from 'src/infra/service/log-parser.service'
+} from '@/infra/handlers/log-file.handler'
 import { Uploader } from '@/domain/application/storage/uploader'
 import {
   Controller,
@@ -16,6 +16,10 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express'
 import { diskStorage } from 'multer'
 import { unlink } from 'fs/promises'
+import { PrismaService } from '@/infra/database/prisma/prisma.service'
+
+// TODO:  Reprocessar a partir de uma linha ou
+//        reprocessar uma partida específica
 
 @Controller({ path: 'game-file', version: '1' })
 export class GameFileController {
@@ -23,7 +27,8 @@ export class GameFileController {
 
   constructor(
     private readonly uploader: Uploader,
-    private readonly logParserService: LogParserService,
+    private readonly logFileHandler: LogFileHandler,
+    private prisma: PrismaService,
   ) {}
 
   @Get('/presigned-url')
@@ -51,23 +56,20 @@ export class GameFileController {
     @UploadedFile() file: Express.Multer.File,
   ): Promise<ProcessingResult> {
     if (!file) {
-      throw new Error('Nenhum arquivo enviado.')
+      throw new Error('No files sent.')
     }
 
-    this.logger.debug(`Arquivo salvo em: ${file.path}`)
+    this.logger.debug(`File saved temporarily in filepath: ${file.path}`)
 
     // Process file - line by line
-    const fileParseResult = await this.logParserService.parseLogFile(file.path)
+    const fileParseResult = await this.logFileHandler.parseLogFile(file.path)
 
     // Remove file after full read
     await unlink(file.path).catch((err) =>
-      this.logger.error(
-        'Erro ao remover o arquivo temporário após a leitura',
-        err,
-      ),
+      this.logger.error('Error removing temporary file after reading', err),
     )
 
-    this.logger.debug(`Arquivo removido após processamento: ${file.path}`)
+    this.logger.debug(`File removed after processing: ${file.path}`)
 
     return fileParseResult
   }
