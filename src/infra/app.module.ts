@@ -4,14 +4,13 @@ import { SeqLoggerModule } from '@jasonsoft/nestjs-seq'
 
 import { envSchema } from 'src/infra/env/env'
 import { EnvModule } from 'src/infra/env/env.module'
-import { AppController } from '@/application/http/controllers/app.controller'
-import { GameFileController } from '@/application/http/controllers/game-file.controller'
 import { StorageModule } from 'src/infra/storage/storage.module'
 import { QueueConsumerModule } from '@/application/queue-consumer/queue-consumer.module'
-import { LogParserService } from 'src/infra/service/log-parser.service'
+import { HttpModule } from '@/application/http/http.module'
+import { CacheModule } from '@/infra/cache/cache.module'
 
 @Module({
-  controllers: [AppController, GameFileController],
+  controllers: [],
   imports: [
     ConfigModule.forRoot({
       validate: (env) => envSchema.parse(env),
@@ -21,7 +20,6 @@ import { LogParserService } from 'src/infra/service/log-parser.service'
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         serverUrl: configService.get('SEQ_SERVER_URL'),
-        // apiKey: configService.get('SEQ_API_KEY'),
         extendMetaProperties: {
           serviceName: configService.get('SEQ_SERVICE_NAME'),
         },
@@ -29,10 +27,12 @@ import { LogParserService } from 'src/infra/service/log-parser.service'
       }),
       inject: [ConfigService],
     }),
+    HttpModule,
     EnvModule,
     StorageModule,
     QueueConsumerModule,
+    CacheModule,
   ],
-  providers: [Logger, LogParserService],
+  providers: [Logger],
 })
 export class AppModule {}
