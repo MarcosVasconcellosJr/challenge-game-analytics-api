@@ -9,10 +9,11 @@ import { GameFileController } from '@/application/http/controllers/game-file.con
 
 import { LogFileHandler } from '@/infra/handlers/log-file.handler'
 import { CreateMatchUseCase } from '@/domain/use-cases/create-match'
+import { GenerateMatchMetricsUseCase } from '@/domain/use-cases/generate-match-metrics'
 
 @Module({
   imports: [EnvModule, DatabaseModule, StorageModule, CacheModule],
   controllers: [AppController, GameFileController],
-  providers: [LogFileHandler, CreateMatchUseCase],
+  providers: [LogFileHandler, CreateMatchUseCase, GenerateMatchMetricsUseCase],
 })
 export class HttpModule {}

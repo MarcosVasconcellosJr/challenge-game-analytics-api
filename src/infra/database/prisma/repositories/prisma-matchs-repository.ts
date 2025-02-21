@@ -28,57 +28,57 @@ export class PrismaMatchsRepository implements MatchsRepository {
   async save(match: Match): Promise<void> {
     const data = PrismaMatchMapper.toPrisma(match)
 
-    await this.prisma.$transaction(async (prisma) => {
-      const matchCreated = await prisma.match.create({
-        data,
+    const matchCreated = await this.prisma.match.upsert({
+      where: { id: data.id },
+      update: data,
+      create: data,
+    })
+
+    for await (const event of match.events) {
+      // weapon
+      const weapon = await this.prisma.weapon.upsert({
+        where: { name: event.weapon.name },
+        update: { name: event.weapon.name },
+        create: { name: event.weapon.name },
       })
 
-      for await (const event of match.events) {
-        // weapon
-        const weapon = await prisma.weapon.upsert({
-          where: { name: event.weapon.name },
-          update: { name: event.weapon.name },
-          create: { name: event.weapon.name },
-        })
+      // killer
+      const killerTeam = await this.prisma.team.upsert({
+        where: { name: event.killer.team.name },
+        update: { name: event.killer.team.name },
+        create: { name: event.killer.team.name },
+      })
+      const killer = await this.prisma.player.upsert({
+        where: { name: event.killer.name },
+        update: { name: event.killer.name, teamId: killerTeam.id },
+        create: { name: event.killer.name, teamId: killerTeam.id },
+      })
 
-        // killer
-        const killerTeam = await prisma.team.upsert({
-          where: { name: event.killer.team.name },
-          update: { name: event.killer.team.name },
-          create: { name: event.killer.team.name },
-        })
-        const killer = await prisma.player.upsert({
-          where: { name: event.killer.name },
-          update: { name: event.killer.name, teamId: killerTeam.id },
-          create: { name: event.killer.name, teamId: killerTeam.id },
-        })
+      // victim
+      const victimTeam = await this.prisma.team.upsert({
+        where: { name: event.victim.team.name },
+        update: { name: event.victim.team.name },
+        create: { name: event.victim.team.name },
+      })
+      const victim = await this.prisma.player.upsert({
+        where: { name: event.victim.name },
+        update: { name: event.victim.name, teamId: victimTeam.id },
+        create: { name: event.victim.name, teamId: victimTeam.id },
+      })
 
-        // victim
-        const victimTeam = await prisma.team.upsert({
-          where: { name: event.victim.team.name },
-          update: { name: event.victim.team.name },
-          create: { name: event.victim.team.name },
-        })
-        const victim = await prisma.player.upsert({
-          where: { name: event.victim.name },
-          update: { name: event.victim.name, teamId: victimTeam.id },
-          create: { name: event.victim.name, teamId: victimTeam.id },
-        })
-
-        await prisma.matchEvent.create({
-          data: {
-            matchId: matchCreated.id,
-            eventType: event.eventType,
-            ocurredAt: event.ocurredAt,
-            weaponId: weapon.id,
-            killerId: killer.id,
-            victimId: victim.id,
-            isWorldEvent: event.isWorldEvent,
-            isFriendlyFire: event.isFriendlyFire,
-          },
-        })
-      }
-    })
+      await this.prisma.matchEvent.create({
+        data: {
+          matchId: matchCreated.id,
+          eventType: event.eventType,
+          ocurredAt: event.ocurredAt,
+          weaponId: weapon.id,
+          killerId: killer.id,
+          victimId: victim.id,
+          isWorldEvent: event.isWorldEvent,
+          isFriendlyFire: event.isFriendlyFire,
+        },
+      })
+    }
 
     DomainEvents.dispatchEventsForAggregate(match.id)
   }

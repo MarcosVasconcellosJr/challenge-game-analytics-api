@@ -64,7 +64,7 @@ export class GameFileController {
     // Process file - line by line
     const fileParseResult = await this.logFileHandler.parseLogFile(file.path)
 
-    // Remove file after full read
+    // Remove file - after full read
     await unlink(file.path).catch((err) =>
       this.logger.error('Error removing temporary file after reading', err),
     )

@@ -114,6 +114,22 @@ export class Match extends AggregateRoot<MatchProps> {
     this.events.push(matchEvent)
   }
 
+  public getEventsAsKiller(player: Player) {
+    const eventsAsKiller = this.props.events.filter(
+      (event) => event.killer.name === player.name,
+    )
+
+    return eventsAsKiller
+  }
+
+  public getEventsAsVictim(player: Player) {
+    const eventsAsKiller = this.props.events.filter(
+      (event) => event.victim.name === player.name,
+    )
+
+    return eventsAsKiller
+  }
+
   static create(
     props: Optional<MatchProps, 'createdAt' | 'endedAt' | 'events'> & {
       id?: string

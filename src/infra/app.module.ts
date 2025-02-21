@@ -8,6 +8,7 @@ import { StorageModule } from 'src/infra/storage/storage.module'
 import { QueueConsumerModule } from '@/application/queue-consumer/queue-consumer.module'
 import { HttpModule } from '@/application/http/http.module'
 import { CacheModule } from '@/infra/cache/cache.module'
+import { EventsModule } from './events/events.module'
 
 @Module({
   controllers: [],
@@ -32,6 +33,7 @@ import { CacheModule } from '@/infra/cache/cache.module'
     StorageModule,
     QueueConsumerModule,
     CacheModule,
+    EventsModule,
   ],
   providers: [Logger],
 })

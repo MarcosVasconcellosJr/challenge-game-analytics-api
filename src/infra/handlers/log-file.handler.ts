@@ -1,13 +1,12 @@
 import { createReadStream } from 'fs'
 import * as readline from 'readline'
+
 import { Injectable, Logger } from '@nestjs/common'
-import { CreateMatchUseCase } from '@/domain/use-cases/create-match'
+import {
+  CreateMatchUseCase,
+  CreateMatchUseCaseRequest,
+} from '@/domain/use-cases/create-match'
 import { EventRowType, LogParser } from '@/application/services/log-parser'
-import { Match } from '@/domain/entities/match'
-import { MatchEvent } from '@/domain/entities/match-event'
-import { Weapon } from '@/domain/entities/weapon'
-import { Player } from '@/domain/entities/player'
-import { Team } from '@/domain/entities/team'
 import { CacheRepository } from '../cache/cache-repository'
 
 interface ReadFileResult {
@@ -72,8 +71,8 @@ export class LogFileHandler {
     let processedLines: number = 0
     let processedMatchs: number = 0
     let lastMatchId: string | undefined
-    let matches: Match[] = []
-    let currentMatch!: Match | null
+    let matches: CreateMatchUseCaseRequest[] = []
+    let currentMatch!: CreateMatchUseCaseRequest | null
 
     for await (const line of rl) {
       processedLines++
@@ -91,24 +90,24 @@ export class LogFileHandler {
       switch (result.type) {
         case EventRowType.killEvent:
           if (!currentMatch) break
-          currentMatch.addMatchEvent(
-            MatchEvent.create({
-              ocurredAt: result.timestamp,
-              eventType: 'kill',
-              matchId: currentMatch.id,
-              weapon: Weapon.create({ name: result.weapon }),
-              killer: Player.create({
-                name: result.killer,
-                team: Team.create({ name: result.killerTeam }),
-              }),
-              victim: Player.create({
-                name: result.victim,
-                team: Team.create({ name: result.victimTeam }),
-              }),
-              isWorldEvent: false,
-              isFriendlyFire: result.killerTeam === result.victimTeam,
-            }),
-          )
+          if (!currentMatch.events) currentMatch.events = []
+
+          currentMatch.events?.push({
+            ocurredAt: result.timestamp,
+            eventType: 'kill',
+            matchId: currentMatch.id,
+            weapon: { name: result.weapon },
+            killer: {
+              name: result.killer,
+              team: { name: result.killerTeam },
+            },
+            victim: {
+              name: result.victim,
+              team: { name: result.victimTeam },
+            },
+            isWorldEvent: false,
+            isFriendlyFire: result.killerTeam === result.victimTeam,
+          })
 
           break
 
@@ -116,8 +115,10 @@ export class LogFileHandler {
           continue
 
         case EventRowType.matchStart:
-          currentMatch = Match.create({ startedAt: result.timestamp })
-          currentMatch.id = result.matchId.toString()
+          currentMatch = {
+            id: result.matchId.toString(),
+            startedAt: result.timestamp,
+          }
 
           break
 
@@ -169,13 +170,16 @@ export class LogFileHandler {
     }
   }
 
-  private async processBatchMatchs(matches: Match[]) {
+  private async processBatchMatchs(matches: CreateMatchUseCaseRequest[]) {
     this.logger.log(`Processing batch with ${matches.length} matches...`)
 
     for await (const match of matches) {
-      await this.createMatch.execute(match)
-
-      await this.cache.set(`log_file_handler:last_match_processed`, match.id)
+      try {
+        await this.createMatch.execute(match)
+      } catch (error) {
+        await this.cache.set(`log_file_handler:last_match_processed`, match.id)
+        break
+      }
     }
 
     this.logger.log(`Batch processed!`)

@@ -9,16 +9,12 @@ export interface MatchEventProps {
   eventType: string
   ocurredAt: Date
   matchId?: string | null
-
   weapon: Weapon
   weaponId?: string | null
-
   killer: Player
   killerId?: string | null
-
   victim: Player
   victimId?: string | null
-
   isWorldEvent: boolean
   isFriendlyFire: boolean
   createdAt: Date
@@ -26,6 +22,14 @@ export interface MatchEventProps {
 }
 
 export class MatchEvent extends Entity<MatchEventProps> {
+  public isKiller(player: Player) {
+    return this.props.killer.name === player.name
+  }
+
+  public isVictim(player: Player) {
+    return this.props.victim.name === player.name
+  }
+
   get eventType() {
     return this.props.eventType
   }
