@@ -7,13 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// -------------------- enums --------------------
-
-enum UserRole {
-  STUDENT
-  INSTRUCTOR
-}
-
 // -------------------- tables --------------------
 
 model Match {
