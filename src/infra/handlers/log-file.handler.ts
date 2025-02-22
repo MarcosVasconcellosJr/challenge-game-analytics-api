@@ -75,7 +75,7 @@ export class LogFileHandler {
     for await (const line of rl) {
       processedLines++
 
-      if (processedLines < startLine) continue // Pula linhas já processadas
+      if (processedLines < startLine) continue // step over if processed already
       if (line === '') continue
 
       const result = this.logLineParser.parse(line)
@@ -135,14 +135,12 @@ export class LogFileHandler {
       }
     }
 
-    // process remaining
     if (matches.length > 0) {
       await this.processBatchMatches(matches)
       lastMatchId = matches[matches.length - 1].id?.toString()
       processedMatches += matches.length
     }
 
-    // flush stream
     rl.close()
     fileStream.close()
 

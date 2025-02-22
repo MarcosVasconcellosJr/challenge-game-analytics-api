@@ -46,12 +46,12 @@ export class PlayersOnMatches extends AggregateRoot {
     this.logger = new Logger('Entity/PlayersOnMatches')
   }
 
-  private calculateFragScore(): number {
+  public calculateFragScore(): number {
     this.fragScore = this.killCount - this.friendlyKillCount
     return this.fragScore
   }
 
-  private calculateKillVsDeathScore(): number {
+  public calculateKillVsDeathScore(): number {
     this.killVsDeathScore = this.fragScore - this.deathCount
     return this.killVsDeathScore
   }
@@ -101,7 +101,7 @@ export class PlayersOnMatches extends AggregateRoot {
     this.calculateKillVsDeathScore()
   }
 
-  private handleKill(matchEvent: MatchEvent): void {
+  public handleKill(matchEvent: MatchEvent): void {
     if (!matchEvent.isFriendlyFire) {
       this.killCount += 1
     } else {
@@ -112,12 +112,12 @@ export class PlayersOnMatches extends AggregateRoot {
     this.logger.debug(`Kill registered for player ${this.player.id}.`)
   }
 
-  private handleDeath(): void {
+  public handleDeath(): void {
     this.deathCount += 1
     this.logger.debug(`Death registered for player ${this.player.id}.`)
   }
 
-  private updateFirstKillTime(firstKillTime: Date | null, matchEvent: MatchEvent): Date | null {
+  public updateFirstKillTime(firstKillTime: Date | null, matchEvent: MatchEvent): Date | null {
     if (!firstKillTime) {
       firstKillTime = matchEvent.occurredAt
       this.logger.debug(`First kill time updated for player ${this.player.id}.`)
@@ -125,14 +125,14 @@ export class PlayersOnMatches extends AggregateRoot {
     return firstKillTime
   }
 
-  private updateMaxStreakCount(): void {
+  public updateMaxStreakCount(): void {
     if (this.deathCount === 0) {
       this.maxStreakCount += 1
       this.logger.debug(`Max streak count updated for player ${this.player.id}.`)
     }
   }
 
-  private checkForFiveKillsInOneMinute(firstKillTime: Date | null, matchEvent: MatchEvent): void {
+  public checkForFiveKillsInOneMinute(firstKillTime: Date | null, matchEvent: MatchEvent): void {
     if (this.killCount >= 5 && firstKillTime) {
       const timeDifference = matchEvent.occurredAt.getTime() - firstKillTime.getTime()
       if (timeDifference <= 60000) {
@@ -142,26 +142,26 @@ export class PlayersOnMatches extends AggregateRoot {
     }
   }
 
-  private checkForSpecialAchievements(): void {
+  public checkForSpecialAchievements(): void {
     if (this.deathCount === 0) {
       this.addDomainEvent(new MatchWithoutDyingEvent(this.player, this.match))
       this.logger.debug(`Match without dying achieved by player ${this.player.id}.`)
     }
   }
 
-  private getPreferredWeapon() {
+  public getPreferredWeapon() {
     const eventsAsKiller = this.match.matchEvents.filter((matchEvent) => matchEvent.isKiller(this.player))
 
     const weaponUsage = this.getWeaponsUsage(eventsAsKiller)
 
     const weaponUsageCounter = Array.from(weaponUsage)
 
-    const preferredWeaponCounter = weaponUsageCounter.sort((a, b) => a[1] - b[1]).shift()
+    const preferredWeaponCounter = weaponUsageCounter.sort((a, b) => b[1] - a[1])[0]
 
     if (preferredWeaponCounter) {
-      this.preferredWeapon = eventsAsKiller.find(
-        (matchEvent) => matchEvent.weapon.name === preferredWeaponCounter.shift()
-      )?.weapon
+      const preferredWeaponName = preferredWeaponCounter[0]
+
+      this.preferredWeapon = eventsAsKiller.find((matchEvent) => matchEvent.weapon.name === preferredWeaponName)?.weapon
 
       this.preferredWeaponId = this.preferredWeapon?.id
     }

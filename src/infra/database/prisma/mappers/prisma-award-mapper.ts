@@ -3,10 +3,7 @@ import { Award } from '@/domain/entities/award'
 
 export class PrismaAwardMapper {
   static toDomain(raw: PrismaAward): Award {
-    return Award.create({
-      title: raw.title,
-      playerId: raw.playerId,
-    })
+    return new Award(raw.title, raw.playerId)
   }
 
   static toPrisma(award: Award): Prisma.AwardUncheckedCreateInput {
