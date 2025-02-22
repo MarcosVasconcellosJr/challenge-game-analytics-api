@@ -2,10 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { EnvService } from 'src/infra/env/env.service'
-import {
-  Uploader,
-  UploadParams,
-} from '@/domain/match/application/storage/uploader'
+import { Uploader, UploadParams } from '@/domain/application/storage/uploader'
 
 @Injectable()
 export class AWSS3Service implements Uploader {

@@ -11,11 +11,6 @@ Componentes:
 5) **AWS S3**: Usado para armazenar os dados dos logs das oartidas usando Presigned URL e Bucket Notifications integrado com o SQS;
 6) **AWS SQS**: Usado para enfileirar os arquivos e processamento das partidas antes de criar as métricas de partidas e rankings globais.
 
-# Arquitetura (funcional)
-
-TODO:
-
-
 # Etapas de processamento
 
 Como é feito o processamento dos logs?

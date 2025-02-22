@@ -32,7 +32,7 @@ services:
       POSTGRES_PASSWORD: docker
       PGDATA: /data/postgres
     volumes:
-      - ./game-data/pg:/data/postgres
+      - ./data/pg:/data/postgres
     networks:
       - game-network
 
@@ -45,7 +45,7 @@ services:
     networks:
       - game-network
     volumes:
-      - ./game-data/redis:/data
+      - ./data/redis:/data
 
   redis-commander:
     container_name: game-redis-gui
@@ -62,8 +62,23 @@ services:
     depends_on:
       - redis
 
+
+  seq:
+    container_name: game-seq-monitoring
+    image: datalust/seq:latest
+    restart: always
+    ports:
+      - "5341:80"
+      - "5342:5342" # OTEL Exporter
+    environment:
+      - ACCEPT_EULA=Y
+    volumes:
+      - ./data/seq:/data
+    networks:
+      - game-network
+
 volumes:
-  game-data:
+  data:
   localstack_volume:
 
 networks:

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common'
 import { AWSS3Service } from './aws-s3.service'
 import { EnvModule } from 'src/infra/env/env.module'
-import { Uploader } from '@/domain/match/application/storage/uploader'
+import { Uploader } from '@/domain/application/storage/uploader'
 
 @Module({
   imports: [EnvModule],

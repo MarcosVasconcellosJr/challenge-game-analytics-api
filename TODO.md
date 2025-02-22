@@ -1,0 +1,5 @@
+- ✅ Mover o event handlers
+- Quebrar em funções
+- O Id nao está salvando o matchId
+- Colocar numeros mágicos no env
+- Terminar os controllers
