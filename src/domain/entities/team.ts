@@ -1,17 +1,23 @@
 import { Entity } from '@/core/entities/entity'
 
-export interface TeamProps {
-  name: string
-}
+export class Team extends Entity {
+  public id: string
+  public name: string
 
-export class Team extends Entity<TeamProps> {
-  get name() {
-    return this.props.name
+  constructor(name: string, id?: string) {
+    super()
+    this.id = id ?? crypto.randomUUID()
+    this.name = name
   }
 
-  static create(props: TeamProps) {
-    const questionAttachment = new Team(props)
+  static create(props: any) {
+    return new Team(props)
+  }
 
-    return questionAttachment
+  toJSON() {
+    return {
+      id: this.id,
+      name: this.name,
+    }
   }
 }

@@ -19,7 +19,7 @@
       "stopOnEntry": false,
       "console": "integratedTerminal",
       "preLaunchTask": "CleanDist",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": ["<node_internals>/**"]
     }
   ]
 }

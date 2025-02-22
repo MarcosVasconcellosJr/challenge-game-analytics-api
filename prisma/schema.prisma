@@ -10,17 +10,17 @@ datasource db {
 // -------------------- tables --------------------
 
 model Match {
-  id              String            @id @default(uuid())
-  startedAt       DateTime
-  endedAt         DateTime
-  winningTeamId   String?
-  winningPlayerId String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime?         @updatedAt
-  winningTeam     Team?             @relation(fields: [winningTeamId], references: [id])
-  winningPlayer   Player?           @relation(fields: [winningPlayerId], references: [id])
-  matchEvents     MatchEvent[]
-  playersOnMatch  PlayersOnMatchs[]
+  id               String            @id @default(uuid())
+  startedAt        DateTime
+  endedAt          DateTime
+  winningTeamId    String?
+  winningPlayerId  String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime?         @updatedAt
+  winningTeam      Team?             @relation(fields: [winningTeamId], references: [id])
+  winningPlayer    Player?           @relation(fields: [winningPlayerId], references: [id])
+  matchEvents      MatchEvent[]
+  playersOnMatches PlayersOnMatchs[]
 
   @@map("match")
 }
@@ -31,7 +31,7 @@ model MatchEvent {
   eventType      String
   isWorldEvent   Boolean  @default(false)
   isFriendlyFire Boolean  @default(false)
-  ocurredAt      DateTime
+  occurredAt     DateTime
   weaponId       String
 
   killerId     String
@@ -89,6 +89,8 @@ model PlayersOnMatchs {
   totalKillCount    Int @default(0)
   deathCount        Int @default(0)
   maxStreakCount    Int @default(0)
+  fragScore         Int @default(0)
+  killVsDeathScore  Int @default(0)
 
   @@id([matchId, playerId])
   @@map("players-on-matchs")

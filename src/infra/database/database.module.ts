@@ -2,11 +2,9 @@ import { Module } from '@nestjs/common'
 import { PrismaService } from './prisma/prisma.service'
 import { CacheModule } from '@/infra/cache/cache.module'
 
-import { MatchsRepository } from '@/domain/repositories/matchs-repository'
-import { PlayersOnMatchsRepository } from '@/domain/repositories/players-on-matchs-repository'
+import { MatchesRepository } from '@/domain/repositories/matches-repository'
+import { PrismaMatchesRepository } from './prisma/repositories/prisma-matchs-repository'
 
-import { PrismaMatchsRepository } from './prisma/repositories/prisma-matchs-repository'
-import { PrismaPlayersOnMatchsRepository } from './prisma/repositories/players-on-matchs-repository'
 import { AwardRepository } from '@/domain/repositories/award-repository'
 import { PrismaAwardRepository } from './prisma/repositories/award-repository'
 
@@ -15,23 +13,14 @@ import { PrismaAwardRepository } from './prisma/repositories/award-repository'
   providers: [
     PrismaService,
     {
-      provide: MatchsRepository,
-      useClass: PrismaMatchsRepository,
-    },
-    {
-      provide: PlayersOnMatchsRepository,
-      useClass: PrismaPlayersOnMatchsRepository,
+      provide: MatchesRepository,
+      useClass: PrismaMatchesRepository,
     },
     {
       provide: AwardRepository,
       useClass: PrismaAwardRepository,
     },
   ],
-  exports: [
-    PrismaService,
-    MatchsRepository,
-    PlayersOnMatchsRepository,
-    AwardRepository,
-  ],
+  exports: [PrismaService, MatchesRepository, AwardRepository],
 })
 export class DatabaseModule {}

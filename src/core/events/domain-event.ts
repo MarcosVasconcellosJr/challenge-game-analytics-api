@@ -1,4 +1,4 @@
 export interface DomainEvent {
-  ocurredAt: Date
+  occurredAt: Date
   getAggregateId(): string
 }

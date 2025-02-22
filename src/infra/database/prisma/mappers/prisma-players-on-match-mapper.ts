@@ -1,10 +1,8 @@
 import { Prisma } from '@prisma/client'
-import { PlayersOnMatchs } from '@/domain/entities/players-on-matchs'
+import { PlayersOnMatches } from '@/domain/entities/players-on-matches'
 
-export class PrismaPlayersOnMatchsMapper {
-  static toPrisma(
-    entity: PlayersOnMatchs,
-  ): Prisma.PlayersOnMatchsUncheckedCreateInput {
+export class PrismaPlayersOnMatchesMapper {
+  static toPrisma(entity: PlayersOnMatches): Prisma.PlayersOnMatchsUncheckedCreateInput {
     return {
       matchId: entity.match?.id ?? entity.matchId,
       playerId: entity.player?.id ?? entity.playerId,

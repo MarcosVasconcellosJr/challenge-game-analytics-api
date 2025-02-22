@@ -2,23 +2,24 @@ import { createReadStream } from 'fs'
 import * as readline from 'readline'
 
 import { Injectable, Logger } from '@nestjs/common'
-import {
-  CreateMatchUseCase,
-  CreateMatchUseCaseRequest,
-} from '@/domain/use-cases/create-match'
-import { EventRowType, LogParser } from '@/application/services/log-parser'
+import { CreateMatchUseCase, CreateMatchUseCaseRequest } from '@/domain/use-cases/create-match'
+import { EventRowType, LogLineParser } from '@/infra/handlers/log-parser'
 import { CacheRepository } from '../cache/cache-repository'
+import { Weapon } from '@/domain/entities/weapon'
+import { Player } from '@/domain/entities/player'
+import { Team } from '@/domain/entities/team'
+import { Match } from '@/domain/entities/match'
 
 interface ReadFileResult {
   processedLines: number
-  processedMatchs: number
+  processedMatches: number
   lastMatchId: string | undefined
 }
 
 export interface ProcessingResult {
   startedTimestamp: Date
   endedTimestamp: Date
-  totalMiliseconds: string
+  totalMilliseconds: string
   fileResult: ReadFileResult
 }
 
@@ -31,30 +32,27 @@ export class LogFileHandler {
   constructor(
     private createMatch: CreateMatchUseCase,
     private cache: CacheRepository,
+    private logLineParser: LogLineParser
   ) {}
 
-  public async parseLogFile(
-    filePath: string,
-    startLine = 0,
-  ): Promise<ProcessingResult> {
+  public async parseLogFile(filePath: string, startLine = 0): Promise<ProcessingResult> {
     const startedTimestamp = new Date()
 
     const fileResult = await this.readFile(filePath, startLine)
 
     const endedTimestamp = new Date()
 
+    const totalMilliseconds = `${endedTimestamp.getTime() - startedTimestamp.getTime()}ms`
+
     return {
       startedTimestamp,
       endedTimestamp,
-      totalMiliseconds: `${endedTimestamp.getTime() - startedTimestamp.getTime()}ms`,
+      totalMilliseconds,
       fileResult,
     }
   }
 
-  private async readFile(
-    filePath: string,
-    startLine: number,
-  ): Promise<ReadFileResult> {
+  private async readFile(filePath: string, startLine: number): Promise<ReadFileResult> {
     this.logger.debug(`Starting file read - path: ${filePath}`)
 
     const fileStream = createReadStream(filePath)
@@ -64,12 +62,12 @@ export class LogFileHandler {
     })
 
     rl.on('error', (err) => {
-      this.logger.error('Erro ao ler arquivo', err)
+      this.logger.error('Error reading file', err)
     })
 
     let batchSizeCounter: number = 0
     let processedLines: number = 0
-    let processedMatchs: number = 0
+    let processedMatches: number = 0
     let lastMatchId: string | undefined
     let matches: CreateMatchUseCaseRequest[] = []
     let currentMatch!: CreateMatchUseCaseRequest | null
@@ -80,7 +78,7 @@ export class LogFileHandler {
       if (processedLines < startLine) continue // Pula linhas já processadas
       if (line === '') continue
 
-      const result = LogParser.parseLine(line)
+      const result = this.logLineParser.parse(line)
 
       if (!result) {
         this.logger.error(`Line ${processedLines} is invalid [${line}]`)
@@ -90,24 +88,16 @@ export class LogFileHandler {
       switch (result.type) {
         case EventRowType.killEvent:
           if (!currentMatch) break
-          if (!currentMatch.events) currentMatch.events = []
+          if (!currentMatch.matchEvents) currentMatch.matchEvents = []
 
-          currentMatch.events?.push({
-            ocurredAt: result.timestamp,
-            eventType: 'kill',
-            matchId: currentMatch.id,
-            weapon: { name: result.weapon },
-            killer: {
-              name: result.killer,
-              team: { name: result.killerTeam },
-            },
-            victim: {
-              name: result.victim,
-              team: { name: result.victimTeam },
-            },
-            isWorldEvent: false,
-            isFriendlyFire: result.killerTeam === result.victimTeam,
-          })
+          currentMatch.addMatchEvent(
+            'kill',
+            result.timestamp,
+            new Weapon(result.weapon),
+            new Player(result.killer, new Team(result.killerTeam)),
+            new Player(result.victim, new Team(result.victimTeam)),
+            false
+          )
 
           break
 
@@ -115,11 +105,7 @@ export class LogFileHandler {
           continue
 
         case EventRowType.matchStart:
-          currentMatch = {
-            id: result.matchId.toString(),
-            startedAt: result.timestamp,
-          }
-
+          currentMatch = new Match(result.timestamp, null, null, null, result.matchId.toString())
           break
 
         case EventRowType.matchEnd:
@@ -133,17 +119,15 @@ export class LogFileHandler {
           break
 
         default:
-          this.logger.error(
-            `Line ${processedLines} has unidentified event pattern [${line}]`,
-          )
+          this.logger.error(`Line ${processedLines} has unidentified event pattern [${line}]`)
           break
       }
 
       if (batchSizeCounter >= this.batchSize) {
         if (matches.length > 0) {
-          await this.processBatchMatchs(matches)
+          await this.processBatchMatches(matches)
           lastMatchId = matches[matches.length - 1].id?.toString()
-          processedMatchs += matches.length
+          processedMatches += matches.length
           matches = []
         }
 
@@ -153,10 +137,9 @@ export class LogFileHandler {
 
     // process remaining
     if (matches.length > 0) {
-      await this.processBatchMatchs(matches)
+      await this.processBatchMatches(matches)
       lastMatchId = matches[matches.length - 1].id?.toString()
-      processedMatchs += matches.length
-      matches = []
+      processedMatches += matches.length
     }
 
     // flush stream
@@ -165,18 +148,20 @@ export class LogFileHandler {
 
     return {
       processedLines,
-      processedMatchs,
+      processedMatches,
       lastMatchId,
     }
   }
 
-  private async processBatchMatchs(matches: CreateMatchUseCaseRequest[]) {
+  private async processBatchMatches(matches: CreateMatchUseCaseRequest[]) {
     this.logger.log(`Processing batch with ${matches.length} matches...`)
 
     for await (const match of matches) {
       try {
         await this.createMatch.execute(match)
       } catch (error) {
+        this.logger.error(`Error processing match ${match.id}: ${error.message}`)
+
         await this.cache.set(`log_file_handler:last_match_processed`, match.id)
         break
       }

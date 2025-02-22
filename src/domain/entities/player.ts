@@ -1,32 +1,25 @@
 import { Entity } from '@/core/entities/entity'
 import { Team } from './team'
 
-export interface PlayerProps {
-  name: string
-  team: Team
-  teamId?: string | null
-}
+export class Player extends Entity {
+  public id: string
+  public name: string
+  public team: Team
+  public teamId?: string
 
-export class Player extends Entity<PlayerProps> {
-  get name() {
-    return this.props.name
+  constructor(name: string, team: Team, id?: string) {
+    super()
+    this.id = id ?? crypto.randomUUID()
+    this.name = name
+    this.team = team
   }
 
-  get team() {
-    return this.props.team
-  }
-
-  get teamId(): string | null | undefined {
-    return this.props.teamId
-  }
-
-  set teamId(teamId: string | null | undefined) {
-    this.props.teamId = teamId
-  }
-
-  static create(props: PlayerProps) {
-    const questionAttachment = new Player(props)
-
-    return questionAttachment
+  toJSON() {
+    return {
+      id: this.id,
+      name: this.name,
+      team: this.team,
+      teamId: this.teamId,
+    }
   }
 }

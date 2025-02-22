@@ -1,34 +1,38 @@
 import { faker } from '@faker-js/faker'
-
-import { Match, MatchProps } from '@/domain/entities/match'
-import { PrismaService } from '@/infra/database/prisma/prisma.service'
-import { PrismaMatchMapper } from '@/infra/database/prisma/mappers/prisma-match-mapper'
-import { Injectable } from '@nestjs/common'
+import { Match } from '@/domain/entities/match'
 import { randomUUID } from 'node:crypto'
+import { MatchEvent } from '@/domain/entities/match-event'
+import { Weapon } from '@/domain/entities/weapon'
+import { Player } from '@/domain/entities/player'
+import { Team } from '@/domain/entities/team'
 
-export function makeMatch(override: Partial<MatchProps> = {}) {
-  const match = Match.create({
-    startedAt: faker.date.anytime(),
-    endedAt: faker.date.anytime(),
-    winningPlayerId: randomUUID(),
-    winningTeamId: randomUUID(),
-    ...override,
-  })
-
-  return match
-}
-
-@Injectable()
-export class MatchFactory {
-  constructor(private prisma: PrismaService) {}
-
-  async makePrismaMatch(data: Partial<MatchProps> = {}): Promise<Match> {
-    const match = makeMatch(data)
-
-    await this.prisma.match.create({
-      data: PrismaMatchMapper.toPrisma(match),
-    })
-
-    return match
-  }
+export function makeMatch(id: string) {
+  return new Match(
+    new Date(),
+    new Date(),
+    [
+      new MatchEvent(
+        randomUUID(),
+        'kill',
+        faker.date.anytime(),
+        new Weapon('AK47'),
+        new Player('LUKE', new Team('Spartan')),
+        new Player('GOLDEN', new Team('Grifnorhia')),
+        false,
+        randomUUID()
+      ),
+      new MatchEvent(
+        randomUUID(),
+        'kill',
+        faker.date.anytime(),
+        new Weapon('M16'),
+        new Player('KAGE', new Team('Spartan')),
+        new Player('FLYN', new Team('Grifnorhia')),
+        false,
+        randomUUID()
+      ),
+    ],
+    null,
+    id
+  )
 }

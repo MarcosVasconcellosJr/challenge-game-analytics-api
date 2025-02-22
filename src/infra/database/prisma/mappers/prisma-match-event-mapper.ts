@@ -2,12 +2,10 @@ import { Prisma } from '@prisma/client'
 import { MatchEvent } from '@/domain/entities/match-event'
 
 export class PrismaMatchEventMapper {
-  static toPrisma(
-    matchEvent: MatchEvent,
-  ): Prisma.MatchEventUncheckedCreateInput {
+  static toPrisma(matchEvent: MatchEvent): Prisma.MatchEventUncheckedCreateInput {
     return {
       id: matchEvent.id?.toString(),
-      ocurredAt: matchEvent.ocurredAt,
+      occurredAt: matchEvent.occurredAt,
       eventType: matchEvent.eventType,
       matchId: `${matchEvent.matchId}`,
       weaponId: `${matchEvent.weaponId}`,

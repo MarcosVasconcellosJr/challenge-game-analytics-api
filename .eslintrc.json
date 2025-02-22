@@ -1,10 +1,25 @@
 {
   "extends": [
     "@rocketseat/eslint-config/node",
-    "prettier"
+    "plugin:prettier/recommended"
   ],
   "rules": {
     "no-useless-constructor": "off",
-    "no-new": "off"
+    "no-new": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "max-len": ["error", { "code": 120, "ignoreUrls": true, "ignoreStrings": true, "ignoreComments": true }],
+    "prettier/prettier": [
+      "error",
+      {
+        "printWidth": 120,
+        "tabWidth": 2,
+        "useTabs": false,
+        "semi": false,
+        "singleQuote": true,
+        "trailingComma": "es5",
+        "bracketSpacing": true,
+        "arrowParens": "always"
+      }
+    ]
   }
 }

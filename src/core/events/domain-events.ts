@@ -5,11 +5,10 @@ type DomainEventCallback = (event: unknown) => void
 
 export class DomainEvents {
   private static handlersMap: Record<string, DomainEventCallback[]> = {}
-  private static markedAggregates: AggregateRoot<unknown>[] = []
-
+  private static markedAggregates: AggregateRoot[] = []
   public static shouldRun = true
 
-  public static markAggregateForDispatch(aggregate: AggregateRoot<unknown>) {
+  public static markAggregateForDispatch(aggregate: AggregateRoot) {
     const aggregateFound = !!this.findMarkedAggregateByID(aggregate.id)
 
     if (!aggregateFound) {
@@ -17,21 +16,17 @@ export class DomainEvents {
     }
   }
 
-  private static dispatchAggregateEvents(aggregate: AggregateRoot<unknown>) {
+  private static dispatchAggregateEvents(aggregate: AggregateRoot) {
     aggregate.domainEvents.forEach((event: DomainEvent) => this.dispatch(event))
   }
 
-  private static removeAggregateFromMarkedDispatchList(
-    aggregate: AggregateRoot<unknown>,
-  ) {
+  private static removeAggregateFromMarkedDispatchList(aggregate: AggregateRoot) {
     const index = this.markedAggregates.findIndex((a) => a.equals(aggregate))
 
     this.markedAggregates.splice(index, 1)
   }
 
-  private static findMarkedAggregateByID(
-    id: string,
-  ): AggregateRoot<unknown> | undefined {
+  private static findMarkedAggregateByID(id: string): AggregateRoot | undefined {
     return this.markedAggregates.find((aggregate) => aggregate.id === id)
   }
 
@@ -45,10 +40,7 @@ export class DomainEvents {
     }
   }
 
-  public static register(
-    callback: DomainEventCallback,
-    eventClassName: string,
-  ) {
+  public static register(callback: DomainEventCallback, eventClassName: string) {
     const wasEventRegisteredBefore = eventClassName in this.handlersMap
 
     if (!wasEventRegisteredBefore) {

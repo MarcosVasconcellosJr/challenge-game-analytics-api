@@ -1,6 +1,5 @@
 import { DomainEvents } from '@/core/events/domain-events'
 import { EventHandler } from '@/core/events/event-handler'
-
 import { Injectable, Logger } from '@nestjs/common'
 import { MatchWithoutDyingEvent } from '../events/match-without-dying-event'
 import { AwardRepository } from '../repositories/award-repository'
@@ -15,20 +14,12 @@ export class OnMatchWithoutDyingEvent implements EventHandler {
   }
 
   setupSubscriptions(): void {
-    DomainEvents.register(
-      this.giveAward.bind(this),
-      MatchWithoutDyingEvent.name,
-    )
+    DomainEvents.register(this.giveAward.bind(this), MatchWithoutDyingEvent.name)
   }
 
   private async giveAward(event: MatchWithoutDyingEvent) {
     this.logger.debug('[MatchWithoutDyingEvent] raised event')
 
-    await this.awardRepository.save(
-      Award.create({
-        playerId: event.player.id,
-        title: 'match_without_dying',
-      }),
-    )
+    await this.awardRepository.save(new Award('match_without_dying', event.player.id))
   }
 }

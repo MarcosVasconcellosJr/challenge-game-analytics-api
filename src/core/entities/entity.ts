@@ -1,15 +1,9 @@
-import { randomUUID } from 'node:crypto'
+export abstract class Entity {
+  readonly id: any
 
-export abstract class Entity<Props> {
-  public id: string
-  protected props: Props
+  abstract toJSON(): any
 
-  protected constructor(props: Props, id?: string) {
-    this.props = props
-    this.id = id ?? randomUUID()
-  }
-
-  public equals(entity: Entity<unknown>) {
+  public equals(entity: Entity) {
     if (entity === this) {
       return true
     }

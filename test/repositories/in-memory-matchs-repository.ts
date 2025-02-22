@@ -1,13 +1,23 @@
 import { DomainEvents } from '@/core/events/domain-events'
-import { MatchsRepository } from '@/domain/repositories/matchs-repository'
+import { MatchesRepository } from '@/domain/repositories/matches-repository'
 import { Match } from '@/domain/entities/match'
 
-export class InMemoryMatchsRepository implements MatchsRepository {
+export class InMemoryMatchesRepository implements MatchesRepository {
   public items: Match[] = []
 
   constructor() {}
 
   async findById(id: string) {
+    const match = this.items.find((item) => item.id.toString() === id)
+
+    if (!match) {
+      return null
+    }
+
+    return match
+  }
+
+  async findWithStatistics(id: string): Promise<Match | null> {
     const question = this.items.find((item) => item.id.toString() === id)
 
     if (!question) {
@@ -17,10 +27,14 @@ export class InMemoryMatchsRepository implements MatchsRepository {
     return question
   }
 
-  async save(match: Match) {
+  async create(match: Match): Promise<void> {
     this.items.push(match)
 
-    // TODO: Save aggregates
+    DomainEvents.dispatchEventsForAggregate(match.id)
+  }
+
+  async save(match: Match) {
+    this.items.push(match)
 
     DomainEvents.dispatchEventsForAggregate(match.id)
   }

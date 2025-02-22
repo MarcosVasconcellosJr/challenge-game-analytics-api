@@ -1,17 +1,23 @@
 import { Entity } from '@/core/entities/entity'
 
-export interface WeaponProps {
-  name: string
-}
+export class Weapon extends Entity {
+  public id: string
+  public name: string
 
-export class Weapon extends Entity<WeaponProps> {
-  get name() {
-    return this.props.name
+  constructor(name: string, id?: string) {
+    super()
+    this.id = id ?? crypto.randomUUID()
+    this.name = name
   }
 
-  static create(props: WeaponProps) {
-    const questionAttachment = new Weapon(props)
+  static create(props: any) {
+    return new Weapon(props)
+  }
 
-    return questionAttachment
+  toJSON() {
+    return {
+      id: this.id,
+      name: this.name,
+    }
   }
 }

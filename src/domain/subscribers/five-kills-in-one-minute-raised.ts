@@ -15,20 +15,12 @@ export class OnFiveKillsInOneMinute implements EventHandler {
   }
 
   setupSubscriptions(): void {
-    DomainEvents.register(
-      this.giveAward.bind(this),
-      FiveKillsInOneMinuteEvent.name,
-    )
+    DomainEvents.register(this.giveAward.bind(this), FiveKillsInOneMinuteEvent.name)
   }
 
   private async giveAward(event: FiveKillsInOneMinuteEvent) {
     this.logger.debug('[FiveKillsInOneMinuteEvent] raised event')
 
-    await this.awardRepository.save(
-      Award.create({
-        playerId: event.player.id,
-        title: '5_kills_in_on_minute',
-      }),
-    )
+    await this.awardRepository.save(new Award('5_kills_in_on_minute', event.player.id))
   }
 }
