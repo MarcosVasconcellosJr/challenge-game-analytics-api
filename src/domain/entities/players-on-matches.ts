@@ -176,9 +176,6 @@ export class PlayersOnMatches extends AggregateRoot {
 
   toJSON(): any {
     return {
-      matchId: this.matchId,
-      player: this.player,
-      playerId: this.playerId,
       killCount: this.killCount,
       friendlyKillCount: this.friendlyKillCount,
       totalKillCount: this.totalKillCount,
@@ -186,8 +183,8 @@ export class PlayersOnMatches extends AggregateRoot {
       maxStreakCount: this.maxStreakCount,
       fragScore: this.fragScore,
       killVsDeathScore: this.killVsDeathScore,
+      player: this.player,
       preferredWeapon: this.preferredWeapon,
-      preferredWeaponId: this.preferredWeaponId,
     }
   }
 }

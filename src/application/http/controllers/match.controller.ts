@@ -53,13 +53,15 @@ export class MatchController {
   async getMatch(@Param('matchId') matchId: string) {
     this.logger.debug('getMatch called', { matchId })
 
-    return await this.fetchMatch.execute({ matchId })
+    const response = await this.fetchMatch.execute({ matchId })
+    return response.value?.toJSON()
   }
 
   @Get('/:matchId/statistics')
   async getMatchStatistics(@Param('matchId') matchId: string) {
     this.logger.debug('getMatchStatistics called', { matchId })
 
-    return await this.fetchMatchStatistics.execute({ matchId })
+    const response = await this.fetchMatchStatistics.execute({ matchId })
+    return response.value?.toJSON()
   }
 }

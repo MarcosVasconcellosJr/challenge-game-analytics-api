@@ -19,8 +19,7 @@ export class Player extends Entity {
     return {
       id: this.id,
       name: this.name,
-      team: this.team,
-      teamId: this.teamId,
+      team: this.team?.toJSON(),
     }
   }
 }

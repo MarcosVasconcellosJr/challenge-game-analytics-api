@@ -29,6 +29,7 @@
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.10",
     "@nestjs/platform-express": "11.0.10",
+    "@nestjs/schedule": "^5.0.1",
     "@nestjs/swagger": "^11.0.4",
     "@prisma/client": "^6.4.1",
     "date-fns": "^4.1.0",

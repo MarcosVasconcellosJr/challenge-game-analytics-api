@@ -9,10 +9,14 @@ import { QueueConsumerModule } from '@/application/queue-consumer/queue-consumer
 import { HttpModule } from '@/application/http/http.module'
 import { CacheModule } from '@/infra/cache/cache.module'
 import { EventsModule } from './events/events.module'
+import { ScheduleModule } from '@nestjs/schedule'
+import { SchedulersService } from '@/application/schedulers/schedulers-service'
+import { DatabaseModule } from '@/infra/database/database.module'
 
 @Module({
   controllers: [],
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       validate: (env) => envSchema.parse(env),
       isGlobal: true,
@@ -34,7 +38,8 @@ import { EventsModule } from './events/events.module'
     QueueConsumerModule,
     CacheModule,
     EventsModule,
+    DatabaseModule,
   ],
-  providers: [Logger],
+  providers: [Logger, SchedulersService],
 })
 export class AppModule {}

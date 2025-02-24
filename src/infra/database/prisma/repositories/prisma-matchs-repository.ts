@@ -14,14 +14,16 @@ import { PrismaWeaponMapper } from '@/infra/database/prisma/mappers/prisma-weapo
 import { PlayersOnMatches } from '@/domain/entities/players-on-matches'
 import { PrismaPlayersOnMatchesMapper } from '@/infra/database/prisma/mappers/prisma-players-on-match-mapper'
 import { GlobalStatisticsViewModel } from '@/application/http/view-model/global-statistics-view-model'
-
-// TODO: Caching
+import { CacheRepository } from '@/infra/cache/cache-repository'
 
 @Injectable()
 export class PrismaMatchesRepository implements MatchesRepository {
   private readonly logger = new Logger(PrismaMatchesRepository.name)
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private cache: CacheRepository
+  ) {}
 
   async create(match: Match): Promise<void> {
     const data = PrismaMatchMapper.toPrisma(match)
@@ -33,13 +35,21 @@ export class PrismaMatchesRepository implements MatchesRepository {
     DomainEvents.dispatchEventsForAggregate(match.id)
   }
 
+  async refreshMaterializedView(): Promise<void> {
+    await this.prisma.$queryRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY player_statistics`
+  }
+
   async findById(id: string): Promise<Match | null> {
     const match = await this.prisma.match.findUnique({
       where: { id },
       include: {
         playersOnMatches: {
           include: {
-            player: true,
+            player: {
+              include: {
+                team: true,
+              },
+            },
           },
         },
         matchEvents: {
@@ -73,7 +83,11 @@ export class PrismaMatchesRepository implements MatchesRepository {
       include: {
         playersOnMatches: {
           include: {
-            player: true,
+            player: {
+              include: {
+                team: true,
+              },
+            },
             preferredWeapon: true,
           },
         },
@@ -91,41 +105,56 @@ export class PrismaMatchesRepository implements MatchesRepository {
     let ranking: GlobalStatisticsViewModel[]
 
     if (!search.realTime) {
-      ranking = await this.prisma.$queryRaw<GlobalStatisticsViewModel[]>`
-        SELECT * 
-        FROM player_statistics
-        WHERE 1=1
-          ${search.playerName && `AND p."name" LIKE '%${search.playerName}%'`}
-          ${search.playerId && `AND p."id" = '%${search.playerId}%'`}
-        LIMIT ${search.limit}
-        OFFSET ${search.offset}
-      `
+      ranking = await this.prisma.$queryRawUnsafe<GlobalStatisticsViewModel[]>(
+        `
+            SELECT
+                playerId,
+                playerName,
+                totalKillVsDeathScore,
+                totalFragScore,
+                totalDeathCount,
+                totalFriendlyKillCount,
+                totalKillCount,
+                totalMaxStreakCount,
+                totalTotalKillCount
+            FROM player_statistics ps
+            WHERE $1::text IS NULL OR ps.playerName ILIKE $1::text
+            LIMIT $2::int
+            OFFSET $3::int
+      `,
+        search.playerName ? `%${search.playerName}%` : null,
+        search.limit,
+        search.offset
+      )
     } else {
-      ranking = await this.prisma.$queryRaw<GlobalStatisticsViewModel[]>`
-        SELECT
-            p.id                                AS playerId,
-            p.name                              AS playerName,
-            SUM(pom."killVsDeathScore")::int    AS totalKillVsDeathScore,
-            SUM(pom."fragScore")::int           AS totalFragScore,
-            SUM(pom."deathCount")::int          AS totalDeathCount,
-            SUM(pom."friendlyKillCount")::int   AS totalFriendlyKillCount,
-            SUM(pom."killCount")::int           AS totalKillCount,
-            SUM(pom."maxStreakCount")::int      AS totalMaxStreakCount,
-            SUM(pom."totalKillCount")::int      AS totalTotalKillCount
-        FROM
-            "player" p
-        JOIN "players-on-matchs" pom ON p.id = pom."playerId"
-        WHERE 1=1
-            --${search.playerName && `AND p."name" LIKE '%${search.playerName}%'`}
-            --${search.playerId && `AND p."id" = '%${search.playerId}%'`}
-        GROUP BY
-            p.id, p.name
-        ORDER BY
-            totalKillVsDeathScore desc,
-            totalFragScore DESC
-        LIMIT ${search.limit}
-        OFFSET ${search.offset}
-      `
+      ranking = await this.prisma.$queryRawUnsafe<GlobalStatisticsViewModel[]>(
+        `
+            SELECT
+                p.id                                AS playerId,
+                p.name                              AS playerName,
+                SUM(pom."killVsDeathScore")::int    AS totalKillVsDeathScore,
+                SUM(pom."fragScore")::int           AS totalFragScore,
+                SUM(pom."deathCount")::int          AS totalDeathCount,
+                SUM(pom."friendlyKillCount")::int   AS totalFriendlyKillCount,
+                SUM(pom."killCount")::int           AS totalKillCount,
+                SUM(pom."maxStreakCount")::int      AS totalMaxStreakCount,
+                SUM(pom."totalKillCount")::int      AS totalTotalKillCount
+            FROM
+                "player" p
+            JOIN "players-on-matchs" pom ON p.id = pom."playerId"
+            WHERE $1::text IS NULL OR p.name ILIKE $1::text
+            GROUP BY
+                p.id, p.name
+            ORDER BY
+                totalKillVsDeathScore desc,
+                totalFragScore DESC
+            LIMIT $2::int
+            OFFSET $3::int
+        `,
+        search.playerName ? `%${search.playerName}%` : null,
+        search.limit,
+        search.offset
+      )
     }
 
     return ranking

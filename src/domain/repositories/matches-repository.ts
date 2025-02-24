@@ -15,4 +15,5 @@ export abstract class MatchesRepository {
   abstract findGlobalStatistics(search: GlobalStatisticsSearch): Promise<any>
   abstract save(match: Match): Promise<void>
   abstract delete(match: Match): Promise<void>
+  abstract refreshMaterializedView(): Promise<void>
 }

@@ -49,17 +49,12 @@ export class MatchEvent extends Entity {
     return {
       eventType: this.eventType,
       occurredAt: this.occurredAt,
-      matchId: this.matchId,
       weapon: this.weapon,
-      weaponId: this.weaponId,
       killerPlayer: this.killerPlayer,
-      killerId: this.killerId,
       victimPlayer: this.victimPlayer,
-      victimId: this.victimId,
       isWorldEvent: this.isWorldEvent,
       isFriendlyFire: this.isFriendlyFire,
       createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
     }
   }
 }

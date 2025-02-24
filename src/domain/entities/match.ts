@@ -89,14 +89,14 @@ export class Match extends AggregateRoot {
   toJSON() {
     return {
       id: this.id,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
       startedAt: this.startedAt,
       endedAt: this.endedAt,
       winningTeam: this.winningTeam?.toJSON(),
       winningPlayer: this.winningPlayer?.toJSON(),
       matchEvents: this._matchEvents?.map((matchEvent) => matchEvent.toJSON()),
       playersOnMatches: this._playersOnMatches?.map((playerOnMatch) => playerOnMatch.toJSON()),
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
     }
   }
 }

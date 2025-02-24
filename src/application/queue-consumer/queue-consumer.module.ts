@@ -11,7 +11,7 @@ export class QueueConsumerModule implements OnModuleInit {
 
   constructor(
     private readonly sqsConsumerService: SqsConsumerService,
-    private readonly envService: EnvService,
+    private readonly envService: EnvService
   ) {}
 
   onModuleInit() {
