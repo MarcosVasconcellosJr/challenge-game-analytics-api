@@ -19,7 +19,9 @@ export class OnFiveKillsInOneMinute implements EventHandler {
   }
 
   private async giveAward(event: FiveKillsInOneMinuteEvent) {
-    this.logger.debug('[FiveKillsInOneMinuteEvent] raised event')
+    this.logger.debug('[FiveKillsInOneMinuteEvent] raised event', {
+      playerName: event.player.name,
+    })
 
     await this.awardRepository.save(new Award('5_kills_in_on_minute', event.player.id))
   }

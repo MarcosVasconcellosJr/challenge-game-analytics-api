@@ -1,19 +1,29 @@
-import { MatchesRepository } from '@/domain/repositories/matches-repository'
+import { GlobalStatisticsSearch, MatchesRepository } from '@/domain/repositories/matches-repository'
 import { Match } from '@/domain/entities/match'
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { PrismaService } from '../prisma.service'
 import { PrismaMatchMapper } from '../mappers/prisma-match-mapper'
 import { DomainEvents } from '@/core/events/domain-events'
-import { MatchEvent } from '@/domain/entities/match-event'
+import { Prisma } from '@prisma/client'
+import { PrismaTeamMapper } from '@/infra/database/prisma/mappers/prisma-team-mapper'
+import { Team } from '@/domain/entities/team'
+import { PrismaPlayerMapper } from '@/infra/database/prisma/mappers/prisma-player-mapper'
+import { Player } from '@/domain/entities/player'
+import { Weapon } from '@/domain/entities/weapon'
+import { PrismaWeaponMapper } from '@/infra/database/prisma/mappers/prisma-weapon-mapper'
 import { PlayersOnMatches } from '@/domain/entities/players-on-matches'
 import { PrismaPlayersOnMatchesMapper } from '@/infra/database/prisma/mappers/prisma-players-on-match-mapper'
-import { Prisma } from '@prisma/client'
-
-// TODO: Caching
+import { GlobalStatisticsViewModel } from '@/application/http/view-model/global-statistics-view-model'
+import { CacheRepository } from '@/infra/cache/cache-repository'
 
 @Injectable()
 export class PrismaMatchesRepository implements MatchesRepository {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(PrismaMatchesRepository.name)
+
+  constructor(
+    private prisma: PrismaService,
+    private cache: CacheRepository
+  ) {}
 
   async create(match: Match): Promise<void> {
     const data = PrismaMatchMapper.toPrisma(match)
@@ -25,13 +35,21 @@ export class PrismaMatchesRepository implements MatchesRepository {
     DomainEvents.dispatchEventsForAggregate(match.id)
   }
 
+  async refreshMaterializedView(): Promise<void> {
+    await this.prisma.$queryRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY player_statistics`
+  }
+
   async findById(id: string): Promise<Match | null> {
     const match = await this.prisma.match.findUnique({
       where: { id },
       include: {
         playersOnMatches: {
           include: {
-            player: true,
+            player: {
+              include: {
+                team: true,
+              },
+            },
           },
         },
         matchEvents: {
@@ -65,7 +83,11 @@ export class PrismaMatchesRepository implements MatchesRepository {
       include: {
         playersOnMatches: {
           include: {
-            player: true,
+            player: {
+              include: {
+                team: true,
+              },
+            },
             preferredWeapon: true,
           },
         },
@@ -79,85 +101,261 @@ export class PrismaMatchesRepository implements MatchesRepository {
     return PrismaMatchMapper.toDomain(match)
   }
 
+  async findGlobalStatistics(search: GlobalStatisticsSearch): Promise<GlobalStatisticsViewModel[]> {
+    let ranking: GlobalStatisticsViewModel[]
+
+    if (!search.realTime) {
+      ranking = await this.prisma.$queryRawUnsafe<GlobalStatisticsViewModel[]>(
+        `
+            SELECT
+                playerId,
+                playerName,
+                totalKillVsDeathScore,
+                totalFragScore,
+                totalDeathCount,
+                totalFriendlyKillCount,
+                totalKillCount,
+                totalMaxStreakCount,
+                totalTotalKillCount
+            FROM player_statistics ps
+            WHERE $1::text IS NULL OR ps.playerName ILIKE $1::text
+            LIMIT $2::int
+            OFFSET $3::int
+      `,
+        search.playerName ? `%${search.playerName}%` : null,
+        search.limit,
+        search.offset
+      )
+    } else {
+      ranking = await this.prisma.$queryRawUnsafe<GlobalStatisticsViewModel[]>(
+        `
+            SELECT
+                p.id                                AS playerId,
+                p.name                              AS playerName,
+                SUM(pom."killVsDeathScore")::int    AS totalKillVsDeathScore,
+                SUM(pom."fragScore")::int           AS totalFragScore,
+                SUM(pom."deathCount")::int          AS totalDeathCount,
+                SUM(pom."friendlyKillCount")::int   AS totalFriendlyKillCount,
+                SUM(pom."killCount")::int           AS totalKillCount,
+                SUM(pom."maxStreakCount")::int      AS totalMaxStreakCount,
+                SUM(pom."totalKillCount")::int      AS totalTotalKillCount
+            FROM
+                "player" p
+            JOIN "players-on-matchs" pom ON p.id = pom."playerId"
+            WHERE $1::text IS NULL OR p.name ILIKE $1::text
+            GROUP BY
+                p.id, p.name
+            ORDER BY
+                totalKillVsDeathScore desc,
+                totalFragScore DESC
+            LIMIT $2::int
+            OFFSET $3::int
+        `,
+        search.playerName ? `%${search.playerName}%` : null,
+        search.limit,
+        search.offset
+      )
+    }
+
+    return ranking
+  }
+
   async save(match: Match): Promise<void> {
-    const data = PrismaMatchMapper.toPrisma(match)
+    const matchData = PrismaMatchMapper.toPrisma(match)
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.match.upsert({
-        where: { id: data.id },
-        update: data,
-        create: data,
-      })
+    const teamsCreatedList = await this.saveTeams(match)
 
-      await Promise.all(match.matchEvents.map((matchEvent) => this.saveMatchEvents(tx, matchEvent)))
+    const [playersCreatedList, weaponsCreatedList] = await Promise.all([
+      this.savePlayers(match, teamsCreatedList),
+      this.saveWeapons(match),
+    ])
 
-      await this.savePlayersOnMatches(tx, match.playersOnMatches)
-    })
+    const playersMap = new Map(playersCreatedList.map((player) => [player.name, player.id]))
+    const weaponsMap = new Map(weaponsCreatedList.map((weapon) => [weapon.name, weapon.id]))
+
+    this.mapPlayersOnMatchFK(match, playersCreatedList)
+
+    await this.prisma.$transaction(
+      async (tx) => {
+        if (match.winningPlayer) {
+          matchData.winningPlayerId = playersCreatedList.find((player) => player.name === match.winningPlayer?.name)?.id
+        }
+
+        const matchCreated = await tx.match.upsert({
+          where: { id: matchData.id },
+          update: matchData,
+          create: matchData,
+        })
+
+        await this.saveMatchEvents(tx, match, matchCreated.id, playersMap, weaponsMap)
+
+        await this.savePlayersOnMatches(tx, match, matchCreated.id, playersMap, weaponsMap)
+      },
+      {
+        maxWait: 50_000,
+        timeout: 100_000,
+      }
+    )
 
     DomainEvents.dispatchEventsForAggregate(match.id)
   }
 
-  private async saveMatchEvents(tx: Prisma.TransactionClient, matchEvent: MatchEvent) {
-    const [weapon, killerTeam, victimTeam] = await Promise.all([
-      tx.weapon.upsert({
-        where: { name: matchEvent.weapon.name },
-        update: { name: matchEvent.weapon.name },
-        create: { name: matchEvent.weapon.name },
-      }),
+  private mapPlayersOnMatchFK(match: Match, playersCreatedList: Player[]) {
+    match.playersOnMatches = match.playersOnMatches.map((playerOnMatch) => {
+      const player = playersCreatedList.find((player) => player.name === playerOnMatch.player.name)
 
-      tx.team.upsert({
-        where: { name: matchEvent.killerPlayer.team.name },
-        update: { name: matchEvent.killerPlayer.team.name },
-        create: { name: matchEvent.killerPlayer.team.name },
-      }),
+      if (player) {
+        playerOnMatch.player.id = player.id
+      }
 
-      tx.team.upsert({
-        where: { name: matchEvent.victimPlayer.team.name },
-        update: { name: matchEvent.victimPlayer.team.name },
-        create: { name: matchEvent.victimPlayer.team.name },
-      }),
-    ])
-
-    const [killer, victim] = await Promise.all([
-      tx.player.upsert({
-        where: { name: matchEvent.killerPlayer.name },
-        update: { name: matchEvent.killerPlayer.name, teamId: killerTeam.id },
-        create: { name: matchEvent.killerPlayer.name, teamId: killerTeam.id },
-      }),
-
-      tx.player.upsert({
-        where: { name: matchEvent.victimPlayer.name },
-        update: { name: matchEvent.victimPlayer.name, teamId: victimTeam.id },
-        create: { name: matchEvent.victimPlayer.name, teamId: victimTeam.id },
-      }),
-    ])
-
-    const matchEventData = {
-      matchId: matchEvent.matchId,
-      eventType: matchEvent.eventType,
-      occurredAt: matchEvent.occurredAt,
-      weaponId: weapon.id,
-      killerId: killer.id,
-      victimId: victim.id,
-      isWorldEvent: matchEvent.isWorldEvent,
-      isFriendlyFire: matchEvent.isFriendlyFire,
-    }
-
-    await tx.matchEvent.upsert({
-      where: { id: matchEvent.id },
-      update: matchEventData,
-      create: matchEventData,
+      return playerOnMatch
     })
   }
 
-  private async savePlayersOnMatches(tx: Prisma.TransactionClient, playersOnMatches: PlayersOnMatches[]) {
-    const data = playersOnMatches.map((playerOnMatch) => PrismaPlayersOnMatchesMapper.toPrisma(playerOnMatch))
+  private async saveWeapons(match: Match): Promise<Weapon[]> {
+    let response: Weapon[]
 
-    await tx.playersOnMatchs.createMany({
-      data,
+    try {
+      const weaponsToCreate: Prisma.WeaponUncheckedCreateInput[] = []
+
+      match.matchEvents.forEach((event) => {
+        if (!weaponsToCreate.find((weapon) => weapon.name === event.weapon.name)) {
+          weaponsToCreate.push(PrismaWeaponMapper.toPrisma(event.weapon))
+        }
+      })
+
+      const weaponsCreatedList = await Promise.all(
+        weaponsToCreate.map((weapon) =>
+          this.prisma.weapon.upsert({
+            where: { name: weapon.name },
+            update: weapon,
+            create: weapon,
+          })
+        )
+      )
+
+      response = weaponsCreatedList.map((weapon) => PrismaWeaponMapper.toDomain(weapon))
+    } catch (err) {
+      this.logger.error('[saveWeapons] Error persisting weapon list', err)
+      throw err
+    }
+
+    return response
+  }
+
+  private async savePlayers(match: Match, teams: Team[]): Promise<Player[]> {
+    let response: Player[]
+
+    try {
+      const playerCreateList: Prisma.PlayerUncheckedCreateInput[] = []
+
+      match.playersOnMatches.forEach((playerOnMatches) => {
+        if (!playerCreateList.find((player) => player.name === playerOnMatches.player.team.name)) {
+          playerOnMatches.player.teamId = teams.find((team) => team.name === playerOnMatches.player.team.name)?.id
+          playerCreateList.push(PrismaPlayerMapper.toPrisma(playerOnMatches.player))
+        }
+      })
+
+      const playersCreatedList = await Promise.all(
+        playerCreateList.map((playerData) =>
+          this.prisma.player.upsert({
+            where: { name: playerData.name },
+            update: playerData,
+            create: playerData,
+          })
+        )
+      )
+
+      response = playersCreatedList.map((player) =>
+        PrismaPlayerMapper.toDomain({
+          ...player,
+          team: teams.find((team) => team.id === player.teamId) as Team,
+        })
+      )
+    } catch (err) {
+      this.logger.error('[savePlayers] Error persisting player list', err)
+      throw err
+    }
+
+    return response
+  }
+
+  private async saveTeams(match: Match): Promise<Team[]> {
+    let response: Team[]
+
+    try {
+      const teamsCreateList: Prisma.TeamUncheckedCreateInput[] = []
+
+      match.playersOnMatches.forEach((playerOnMatches) => {
+        if (!teamsCreateList.find((team) => team.name === playerOnMatches.player.team.name)) {
+          teamsCreateList.push(PrismaTeamMapper.toPrisma(playerOnMatches.player.team))
+        }
+      })
+
+      const teamsCreatedList = await Promise.all(
+        teamsCreateList.map((teamData) =>
+          this.prisma.team.upsert({
+            where: { name: teamData.name },
+            update: teamData,
+            create: teamData,
+          })
+        )
+      )
+
+      response = teamsCreatedList.map((team) => PrismaTeamMapper.toDomain(team))
+    } catch (err) {
+      this.logger.error('[saveTeams] Error persisting team list', err)
+      throw err
+    }
+
+    return response
+  }
+
+  private async savePlayersOnMatches(
+    tx: Prisma.TransactionClient,
+    match: Match,
+    matchId: string,
+    playersMap: Map<string, string>,
+    weaponsMap: Map<string, string>
+  ) {
+    const playersOnMatchesList = match.playersOnMatches.map((playerOnMatch) => {
+      const playerId = playersMap.get(playerOnMatch.player.name)
+
+      return {
+        ...playerOnMatch,
+        player: { ...playerOnMatch.player, id: playerId },
+        playerId,
+      } as PlayersOnMatches
     })
 
-    playersOnMatches.forEach((agg) => {
+    const data = playersOnMatchesList.map((playerOnMatch) => PrismaPlayersOnMatchesMapper.toPrisma(playerOnMatch))
+
+    await Promise.all(
+      data.map((playersOnMatchData) => {
+        const playerOnMatch = playersOnMatchesList.find(
+          (playerOnMatch) => playerOnMatch.playerId === playersOnMatchData.playerId
+        )
+
+        let preferredWeaponId
+        if (playerOnMatch && playerOnMatch.preferredWeapon) {
+          preferredWeaponId = weaponsMap.get(playerOnMatch.preferredWeapon.name)
+        }
+
+        const upsertPayload: Prisma.PlayersOnMatchsUncheckedCreateInput = {
+          ...playersOnMatchData,
+          matchId,
+          preferredWeaponId,
+        }
+
+        return tx.playersOnMatchs.upsert({
+          where: { matchId_playerId: { matchId, playerId: playersOnMatchData.playerId } },
+          create: upsertPayload,
+          update: upsertPayload,
+        })
+      })
+    )
+
+    match.playersOnMatches.forEach((agg) => {
       DomainEvents.dispatchEventsForAggregate(agg.id)
     })
   }
@@ -170,5 +368,37 @@ export class PrismaMatchesRepository implements MatchesRepository {
         id: data.id,
       },
     })
+  }
+
+  private async saveMatchEvents(
+    tx: Prisma.TransactionClient,
+    match: Match,
+    matchId: string,
+    playersMap: Map<string, string>,
+    weaponsMap: Map<string, string>
+  ) {
+    try {
+      await tx.matchEvent.deleteMany({ where: { matchId } })
+
+      const createMany = match.matchEvents.map((event) => {
+        const matchEventData: Prisma.MatchEventCreateManyInput = {
+          matchId,
+          eventType: event.eventType,
+          occurredAt: event.occurredAt,
+          weaponId: weaponsMap.get(event.weapon.name) as string,
+          killerId: playersMap.get(event.killerPlayer.name) as string,
+          victimId: playersMap.get(event.victimPlayer.name) as string,
+          isWorldEvent: event.isWorldEvent,
+          isFriendlyFire: event.isFriendlyFire,
+        }
+
+        return matchEventData
+      })
+
+      await tx.matchEvent.createMany({ data: createMany })
+    } catch (err) {
+      this.logger.error('[saveMatchEvents] Error persisting match event list', err)
+      throw err
+    }
   }
 }

@@ -6,7 +6,6 @@ import { Team } from '@/domain/entities/team'
 import { Prisma } from '@prisma/client'
 import { PlayersOnMatches } from '@/domain/entities/players-on-matches'
 
-// TODO: Automapper TS
 export class PrismaMatchMapper {
   static toDomain(raw: any): Match {
     const matchEvents = raw.matchEvents?.map(
@@ -31,7 +30,7 @@ export class PrismaMatchMapper {
         )
     )
 
-    const match = new Match(raw.startedAt, raw.endedAt, matchEvents)
+    const match = new Match(raw.startedAt, raw.endedAt, matchEvents, null, raw.id)
 
     match.playersOnMatches = raw.playersOnMatches?.map(
       (playersOnMatch) =>
