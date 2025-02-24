@@ -36,7 +36,13 @@ export class CreateMatchUseCase {
         )
     )
 
-    const match = new Match(request.startedAt, request.endedAt, matchEvents, this.createPlayersOnMatches(request))
+    const match = new Match(
+      request.startedAt,
+      request.endedAt,
+      matchEvents,
+      this.createPlayersOnMatches(request),
+      request.id
+    )
 
     match.setWinningPlayer()
 
@@ -71,8 +77,8 @@ export class CreateMatchUseCase {
     const uniquePlayers = new Map<string, Player>()
 
     for (const player of allPlayers) {
-      if (!uniquePlayers.has(player.id)) {
-        uniquePlayers.set(player.id, player)
+      if (!uniquePlayers.has(player.name)) {
+        uniquePlayers.set(player.name, player)
       }
     }
 

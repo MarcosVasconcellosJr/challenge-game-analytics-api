@@ -18,7 +18,9 @@ export class OnMatchWithoutDyingEvent implements EventHandler {
   }
 
   private async giveAward(event: MatchWithoutDyingEvent) {
-    this.logger.debug('[MatchWithoutDyingEvent] raised event')
+    this.logger.log('[MatchWithoutDyingEvent] raised event', {
+      matchId: event.match.id,
+    })
 
     await this.awardRepository.save(new Award('match_without_dying', event.player.id))
   }

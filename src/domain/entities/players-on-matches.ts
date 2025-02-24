@@ -21,6 +21,7 @@ export class PlayersOnMatches extends AggregateRoot {
   public killVsDeathScore: number
   public preferredWeapon?: Weapon
   public preferredWeaponId?: string | null
+  private fiveKillsInOneMinuteEventRaised: boolean = false
 
   private logger: Logger
 
@@ -70,7 +71,6 @@ export class PlayersOnMatches extends AggregateRoot {
 
   private sortMatchEventsChronologically(): void {
     this.match.matchEvents = this.match.matchEvents.sort((a, b) => a.occurredAt.getTime() - b.occurredAt.getTime())
-    this.logger.debug('Match events sorted chronologically.')
   }
 
   private getEventsAsParticipant() {
@@ -109,18 +109,15 @@ export class PlayersOnMatches extends AggregateRoot {
     }
 
     this.totalKillCount += 1
-    this.logger.debug(`Kill registered for player ${this.player.id}.`)
   }
 
   public handleDeath(): void {
     this.deathCount += 1
-    this.logger.debug(`Death registered for player ${this.player.id}.`)
   }
 
   public updateFirstKillTime(firstKillTime: Date | null, matchEvent: MatchEvent): Date | null {
     if (!firstKillTime) {
       firstKillTime = matchEvent.occurredAt
-      this.logger.debug(`First kill time updated for player ${this.player.id}.`)
     }
     return firstKillTime
   }
@@ -128,16 +125,15 @@ export class PlayersOnMatches extends AggregateRoot {
   public updateMaxStreakCount(): void {
     if (this.deathCount === 0) {
       this.maxStreakCount += 1
-      this.logger.debug(`Max streak count updated for player ${this.player.id}.`)
     }
   }
 
   public checkForFiveKillsInOneMinute(firstKillTime: Date | null, matchEvent: MatchEvent): void {
     if (this.killCount >= 5 && firstKillTime) {
       const timeDifference = matchEvent.occurredAt.getTime() - firstKillTime.getTime()
-      if (timeDifference <= 60000) {
+      if (timeDifference <= 60000 && !this.fiveKillsInOneMinuteEventRaised) {
         this.addDomainEvent(new FiveKillsInOneMinuteEvent(this.player))
-        this.logger.debug(`Five kills in one minute achieved by player ${this.player.id}.`)
+        this.fiveKillsInOneMinuteEventRaised = true
       }
     }
   }
@@ -145,7 +141,6 @@ export class PlayersOnMatches extends AggregateRoot {
   public checkForSpecialAchievements(): void {
     if (this.deathCount === 0) {
       this.addDomainEvent(new MatchWithoutDyingEvent(this.player, this.match))
-      this.logger.debug(`Match without dying achieved by player ${this.player.id}.`)
     }
   }
 

@@ -116,6 +116,22 @@ describe('PlayersOnMatches Entity', () => {
     expect(playersOnMatches.domainEvents).toContainEqual(expect.any(FiveKillsInOneMinuteEvent))
   })
 
+  it('should check for five kills in one minute achievement and don"t raise event more than once', () => {
+    const playersOnMatches = new PlayersOnMatches(match, player1)
+    const firstKillTime = new Date()
+    const events = Array.from({ length: 5 }, (_, i) => ({
+      ...matchEvent,
+      occurredAt: new Date(firstKillTime.getTime() + i * 10000), // 10 seconds apart
+    }))
+
+    events.forEach((event) => {
+      playersOnMatches.handleKill(event as MatchEvent)
+      playersOnMatches.checkForFiveKillsInOneMinute(firstKillTime, event as MatchEvent)
+    })
+
+    expect(playersOnMatches.domainEvents.length).toEqual(1)
+  })
+
   it('should check for match without dying achievement', () => {
     const playersOnMatches = new PlayersOnMatches(match, player1)
     playersOnMatches.checkForSpecialAchievements()

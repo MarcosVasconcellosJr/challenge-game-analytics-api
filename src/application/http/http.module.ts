@@ -13,10 +13,18 @@ import { LogLineParser } from '@/infra/handlers/log-parser'
 import { CreateMatchUseCase } from '@/domain/use-cases/create-match'
 import { FetchMatchUseCase } from '@/domain/use-cases/fetch-match'
 import { FetchMatchStatisticsUseCase } from '@/domain/use-cases/fetch-match-statistics'
+import { FetchMatchGlobalStatisticsUseCase } from '@/domain/use-cases/fetch-match-global-statistics'
 
 @Module({
   imports: [EnvModule, DatabaseModule, StorageModule, CacheModule],
   controllers: [AppController, GameFileController, MatchController],
-  providers: [LogFileHandler, LogLineParser, CreateMatchUseCase, FetchMatchUseCase, FetchMatchStatisticsUseCase],
+  providers: [
+    LogFileHandler,
+    LogLineParser,
+    CreateMatchUseCase,
+    FetchMatchUseCase,
+    FetchMatchStatisticsUseCase,
+    FetchMatchGlobalStatisticsUseCase,
+  ],
 })
 export class HttpModule {}

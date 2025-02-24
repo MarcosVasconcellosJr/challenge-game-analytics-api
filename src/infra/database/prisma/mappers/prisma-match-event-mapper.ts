@@ -4,7 +4,6 @@ import { MatchEvent } from '@/domain/entities/match-event'
 export class PrismaMatchEventMapper {
   static toPrisma(matchEvent: MatchEvent): Prisma.MatchEventUncheckedCreateInput {
     return {
-      id: matchEvent.id?.toString(),
       occurredAt: matchEvent.occurredAt,
       eventType: matchEvent.eventType,
       matchId: `${matchEvent.matchId}`,
