@@ -47,6 +47,7 @@ export class MatchEvent extends Entity {
 
   toJSON() {
     return {
+      matchId: this.matchId,
       eventType: this.eventType,
       occurredAt: this.occurredAt,
       weapon: this.weapon,

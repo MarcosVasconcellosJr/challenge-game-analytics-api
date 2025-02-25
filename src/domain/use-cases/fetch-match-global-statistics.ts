@@ -1,7 +1,7 @@
 import { Either, right } from '@/core/either'
 import { MatchesRepository } from '../repositories/matches-repository'
 import { Injectable } from '@nestjs/common'
-import { Match } from '../entities/match'
+import { GlobalStatisticsViewModel } from '@/application/http/view-model/global-statistics-view-model'
 
 interface FetchMatchGlobalStatisticsUseCaseRequest {
   playerName?: string
@@ -11,7 +11,7 @@ interface FetchMatchGlobalStatisticsUseCaseRequest {
   realTime: boolean
 }
 
-type FetchMatchGlobalStatisticsUseCaseResponse = Either<null, Match | null>
+type FetchMatchGlobalStatisticsUseCaseResponse = Either<null, GlobalStatisticsViewModel[] | null>
 
 @Injectable()
 export class FetchMatchGlobalStatisticsUseCase {

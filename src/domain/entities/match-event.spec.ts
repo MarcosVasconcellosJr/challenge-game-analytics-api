@@ -85,15 +85,11 @@ describe('MatchEvent Entity', () => {
       occurredAt,
       matchId,
       weapon,
-      weaponId: undefined,
       killerPlayer,
-      killerId: undefined,
       victimPlayer,
-      victimId: undefined,
       isWorldEvent,
       isFriendlyFire: false,
       createdAt: matchEvent.createdAt,
-      updatedAt: undefined,
     })
   })
 })
