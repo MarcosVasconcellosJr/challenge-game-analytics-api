@@ -1,0 +1,290 @@
+{
+	"info": {
+		"_postman_id": "682c9512-fb58-4a42-885b-ea47325d4889",
+		"name": "Game Challenge",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "8750471",
+		"_collection_link": "https://www.postman.com/marquerajrvcs/workspace/public/collection/8750471-682c9512-fb58-4a42-885b-ea47325d4889?action=share&source=collection_link&creator=8750471"
+	},
+	"item": [
+		{
+			"name": "Game File",
+			"item": [
+				{
+					"name": "Process file",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "game-file",
+									"type": "file",
+									"src": "/Users/marcos/Documents/Projetos/nomad/log-file-seeder/log-file-match-with-team.txt",
+									"disabled": true
+								},
+								{
+									"key": "game-file",
+									"type": "file",
+									"src": "/Users/marcos/Documents/Projetos/nomad/log-file-seeder/log-file-match-with-team-full.txt"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{domain}}/game-file/upload",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"game-file",
+								"upload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Put File In Storage",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "file",
+							"file": {
+								"src": "/Users/marcos/Documents/Projetos/nomad/log-file-seeder/log-file-match-with-team-full.txt"
+							}
+						},
+						"url": {
+							"raw": "{{presign_url}}",
+							"host": [
+								"{{presign_url}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Presigned URL",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									" var jsonData = pm.response.json();",
+									"",
+									"pm.environment.set(\"presign_url\", jsonData.url);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{domain}}/game-file/pre-signed-url?fileKey={{$randomFileName}}.txt",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"game-file",
+								"pre-signed-url"
+							],
+							"query": [
+								{
+									"key": "fileKey",
+									"value": "{{$randomFileName}}.txt"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Match",
+			"item": [
+				{
+					"name": "Global Statistics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{domain}}/match/global-statistics",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"match",
+								"global-statistics"
+							],
+							"query": [
+								{
+									"key": "playerName",
+									"value": "Aglae",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Global Statistics in Real Time",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{domain}}/match/global-statistics/real-time",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"match",
+								"global-statistics",
+								"real-time"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Match by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{domain}}/match/:id",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"match",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "350"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Match Statistics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{domain}}/match/:id/statistics",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"match",
+								":id",
+								"statistics"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "359"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Hello world",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "game-file",
+							"type": "file",
+							"src": "/Users/marcos/Documents/Projetos/nomad/log-file-seeder/log-file-match-with-team.txt"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{domain}}/",
+					"host": [
+						"{{domain}}"
+					],
+					"path": [
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Enviar log para SEQ",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"Events\": [\n        {\n            \"Timestamp\": \"2025-02-19T12:00:00Z\",\n            \"Level\": \"Information\",\n            \"MessageTemplate\": \"Log enviado sem API Key\",\n            \"Properties\": {\n                \"App\": \"TestApp\"\n            }\n        }\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5341/api/events/raw",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5341",
+					"path": [
+						"api",
+						"events",
+						"raw"
+					]
+				},
+				"description": "Generated from cURL: curl -X POST \"http://localhost:5341/api/events/raw\" \\\n     -H \"Content-Type: application/json\" \\\n     -d '{\n           \"Events\": [\n             {\n               \"Timestamp\": \"2025-02-19T12:00:00Z\",\n               \"Level\": \"Information\",\n               \"MessageTemplate\": \"Log enviado sem API Key\",\n               \"Properties\": {\n                 \"App\": \"TestApp\"\n               }\n             }\n           ]\n         }'\n"
+			},
+			"response": []
+		}
+	]
+}
