@@ -41,6 +41,9 @@ O que é um ADR? [Clique aqui para ler](./ADR/ADR%20-%20What%20is.md)
 |ADR_OO2 | Materialized View |[🔗 abrir](./ADR/ADR_OO2-Materialized%20View.md)|
 |ADR_OO3 | Redis |[🔗 abrir](./ADR/ADR_OO3-Redis.md)|
 
+# Diagrama Entidade Relacionamento
+
+![Diagrama Entidade Relacionamento](./Assets/MER.png)
 
 # Navegação
 
