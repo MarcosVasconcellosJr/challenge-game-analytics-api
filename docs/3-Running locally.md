@@ -27,7 +27,7 @@ Para rodar o docker-compose, rode o seguinte comando
 Quando quiser encerrar a infra do docker, rode o seguinte comando
 
 ```bash
-  docker compose down
+  docker compose down -v
 ```
 
 ## Rodando os testes
@@ -51,6 +51,18 @@ Inicie o servidor
 ```bash
   yarn start
 ```
+
+## Testando no postman
+
+Baixar e importar a Collection do `Postman` aqui:
+[Download Collection](./Assets/Game-Challenge.postman_collection.json)
+
+Anexar arquivo de testes abaixo nas requisições: 
+[Arquivo de teste](./Assets/log-file-match-with-team.txt)
+
+Baixar e importar o env `localhost` aqui:
+[env-vars](./Assets/game-api-local.postman_environment.json)
+
 
 # Navegação
 
