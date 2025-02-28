@@ -183,8 +183,8 @@ export class PlayersOnMatches extends AggregateRoot {
       maxStreakCount: this.maxStreakCount,
       fragScore: this.fragScore,
       killVsDeathScore: this.killVsDeathScore,
-      player: this.player,
-      preferredWeapon: this.preferredWeapon,
+      player: this.player?.toJSON(),
+      preferredWeapon: this.preferredWeapon?.toJSON(),
     }
   }
 }

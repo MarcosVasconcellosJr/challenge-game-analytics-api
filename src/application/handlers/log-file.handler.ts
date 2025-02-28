@@ -3,8 +3,8 @@ import * as readline from 'readline'
 
 import { Injectable, Logger } from '@nestjs/common'
 import { CreateMatchUseCase, CreateMatchUseCaseRequest } from '@/domain/use-cases/create-match'
-import { EventRowType, LogLineParser } from '@/infra/handlers/log-parser'
-import { CacheRepository } from '../cache/cache-repository'
+import { EventRowType, LogLineParser } from '@/application/handlers/log-parser'
+import { CacheRepository } from '@/infra/cache/cache-repository'
 import { Weapon } from '@/domain/entities/weapon'
 import { Player } from '@/domain/entities/player'
 import { Team } from '@/domain/entities/team'
@@ -35,10 +35,10 @@ export class LogFileHandler {
     private logLineParser: LogLineParser
   ) {}
 
-  public async parseLogFile(filePath: string, startLine = 0): Promise<ProcessingResult> {
+  public async parseLogFile(cloudFilePath: string, startLine = 0): Promise<ProcessingResult> {
     const startedTimestamp = new Date()
 
-    const fileResult = await this.readFile(filePath, startLine)
+    const fileResult = await this.readFile(cloudFilePath, startLine)
 
     const endedTimestamp = new Date()
 
@@ -52,10 +52,10 @@ export class LogFileHandler {
     }
   }
 
-  private async readFile(filePath: string, startLine: number): Promise<ReadFileResult> {
-    this.logger.debug(`Starting file read - path: ${filePath}`)
+  private async readFile(localDirectoryFilePath: string, startLine: number): Promise<ReadFileResult> {
+    this.logger.debug(`Starting file read - path: ${localDirectoryFilePath}`)
 
-    const fileStream = createReadStream(filePath)
+    const fileStream = createReadStream(localDirectoryFilePath)
     const rl = readline.createInterface({
       input: fileStream,
       crlfDelay: Infinity,

@@ -4,7 +4,7 @@ import { SeqLoggerModule } from '@jasonsoft/nestjs-seq'
 
 import { envSchema } from 'src/infra/env/env'
 import { EnvModule } from 'src/infra/env/env.module'
-import { StorageModule } from 'src/infra/storage/storage.module'
+import { CloudStorageModule } from '@/infra/cloud-storage/cloud-storage.module'
 import { QueueConsumerModule } from '@/application/queue-consumer/queue-consumer.module'
 import { HttpModule } from '@/application/http/http.module'
 import { CacheModule } from '@/infra/cache/cache.module'
@@ -12,6 +12,7 @@ import { EventsModule } from './events/events.module'
 import { ScheduleModule } from '@nestjs/schedule'
 import { SchedulersService } from '@/application/schedulers/schedulers-service'
 import { DatabaseModule } from '@/infra/database/database.module'
+import { HandlersModule } from '@/application/handlers/handlers.module'
 
 @Module({
   controllers: [],
@@ -34,11 +35,12 @@ import { DatabaseModule } from '@/infra/database/database.module'
     }),
     HttpModule,
     EnvModule,
-    StorageModule,
+    CloudStorageModule,
     QueueConsumerModule,
     CacheModule,
     EventsModule,
     DatabaseModule,
+    HandlersModule,
   ],
   providers: [Logger, SchedulersService],
 })

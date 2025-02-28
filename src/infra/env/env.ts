@@ -13,7 +13,6 @@ export const envSchema = z.object({
   AWS_S3_REGION: z.string().default('sa-east-1'),
   AWS_S3_BUCKET_NAME: z.string(),
   AWS_SQS_REGION: z.string().default('sa-east-1'),
-  AWS_SQS_QUEUE_URL_MATCH: z.string(),
   AWS_SQS_QUEUE_URL_FILE: z.string(),
   FEATURE_FLAG_CONSUMERS_ENABLED: z.coerce.boolean(),
   SEQ_SERVER_URL: z.string(),

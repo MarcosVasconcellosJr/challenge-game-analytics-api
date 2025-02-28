@@ -1,7 +1,6 @@
-import { LogFileHandler, ProcessingResult } from '@/infra/handlers/log-file.handler'
-import { Uploader } from '@/domain/application/storage/uploader'
+import { LogFileHandler, ProcessingResult } from '@/application/handlers/log-file.handler'
+import { CloudStorageService } from '@/domain/application/storage/cloud-storage'
 import { Controller, Get, Query, Logger, UseInterceptors, Post, UploadedFile } from '@nestjs/common'
-
 import { FileInterceptor } from '@nestjs/platform-express'
 import { diskStorage } from 'multer'
 import { unlink } from 'fs/promises'
@@ -11,13 +10,13 @@ export class GameFileController {
   private readonly logger = new Logger(GameFileController.name)
 
   constructor(
-    private readonly uploader: Uploader,
+    private readonly cloudStorageService: CloudStorageService,
     private readonly logFileHandler: LogFileHandler
   ) {}
 
   @Get('/pre-signed-url')
   async getPreSignedUrl(@Query('fileKey') fileKey: string) {
-    const url = await this.uploader.generatePresignedUrl({
+    const url = await this.cloudStorageService.generatePreSignedUrl({
       fileKey,
     })
 

@@ -7,8 +7,7 @@ import { EnvService } from '@/infra/env/env.service'
 export class SqsConsumerService {
   private readonly logger = new Logger(SqsConsumerService.name)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private consumers: any[] = []
+  private consumers: Consumer[] = []
 
   constructor(private readonly envService: EnvService) {}
 
@@ -23,37 +22,47 @@ export class SqsConsumerService {
           secretAccessKey: this.envService.get('AWS_SECRET_ACCESS_KEY'),
         },
         endpoint: this.envService.get('AWS_ENDPOINT'),
+        maxAttempts: 3,
+        retryMode: 'adaptive',
       }),
     })
 
     app.on('error', (err) => {
-      this.logger.error(`Erro na fila ${queueUrl}`, err)
+      this.logger.error(`Queue error: ${queueUrl}`, err)
     })
 
     app.on('processing_error', (err) => {
-      this.logger.error(
-        `Erro ao processar a mensagem na fila ${queueUrl}: ${err.message}`,
-      )
+      this.logger.error(`Error processing message on queue: ${queueUrl}: ${err.message}`, {
+        queueUrl,
+        errorMessage: err.message,
+      })
     })
 
     app.on('timeout_error', (err) => {
-      this.logger.error(`Erro de timeout na fila ${queueUrl}: ${err.message}`)
+      this.logger.error(`Timeout error on queue ${queueUrl}: ${err.message}`, {
+        queueUrl,
+        errorMessage: err.message,
+      })
     })
 
     this.consumers.push(app)
   }
 
   startConsumers() {
-    this.consumers.forEach((consumer) => {
+    this.logger.debug('Starting consumers')
+
+    this.consumers.forEach((consumer, index) => {
       consumer.start()
-      this.logger.log('Iniciando consumidor para fila')
+      this.logger.debug(`Consumer ${index + 1} started`)
     })
   }
 
   stopConsumers() {
-    this.consumers.forEach((consumer) => {
+    this.logger.debug('Stopping consumers')
+
+    this.consumers.forEach((consumer, index) => {
       consumer.stop()
-      this.logger.log('Parando consumidor para fila')
+      this.logger.debug(`Consumer ${index + 1} stopped`)
     })
   }
 }

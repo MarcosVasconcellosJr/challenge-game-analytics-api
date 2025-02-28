@@ -18,15 +18,18 @@ export class PrismaMatchMapper {
           new Player(
             matchEvent.killerPlayer.name,
             new Team(matchEvent.killerPlayer.team.name, matchEvent.killerPlayer.team.id),
+            matchEvent.killerPlayer.team.id,
             matchEvent.killerPlayer.id
           ),
           new Player(
             matchEvent.victimPlayer.name,
             new Team(matchEvent.victimPlayer.team.name, matchEvent.victimPlayer.team.id),
+            matchEvent.victimPlayer.team.id,
             matchEvent.victimPlayer.id
           ),
           matchEvent.isWorldEvent,
-          raw.id
+          raw.id,
+          raw.createdAt
         )
     )
 
@@ -36,7 +39,12 @@ export class PrismaMatchMapper {
       (playersOnMatch) =>
         new PlayersOnMatches(
           match,
-          new Player(playersOnMatch.player.name, new Team(playersOnMatch.player.team.name)),
+          new Player(
+            playersOnMatch.player.name,
+            new Team(playersOnMatch.player.team.name, playersOnMatch.player.team.id),
+            playersOnMatch.player.team.id,
+            playersOnMatch.player.id
+          ),
           playersOnMatch.killCount,
           playersOnMatch.friendlyKillCount,
           playersOnMatch.totalKillCount,

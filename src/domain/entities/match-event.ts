@@ -26,11 +26,12 @@ export class MatchEvent extends Entity {
     killerPlayer: Player,
     victimPlayer: Player,
     isWorldEvent: boolean,
-    id?: string
+    id?: string,
+    createdAt?: Date
   ) {
     super()
     this.id = id ?? crypto.randomUUID()
-    this.createdAt = new Date()
+    this.createdAt = createdAt ?? new Date()
     this.matchId = matchId
     this.eventType = eventType
     this.occurredAt = occurredAt
@@ -50,9 +51,9 @@ export class MatchEvent extends Entity {
       matchId: this.matchId,
       eventType: this.eventType,
       occurredAt: this.occurredAt,
-      weapon: this.weapon,
-      killerPlayer: this.killerPlayer,
-      victimPlayer: this.victimPlayer,
+      weapon: this.weapon?.toJSON(),
+      killerPlayer: this.killerPlayer?.toJSON(),
+      victimPlayer: this.victimPlayer?.toJSON(),
       isWorldEvent: this.isWorldEvent,
       isFriendlyFire: this.isFriendlyFire,
       createdAt: this.createdAt,
