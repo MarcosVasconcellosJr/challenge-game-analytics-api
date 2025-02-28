@@ -3,8 +3,8 @@ import * as readline from 'readline'
 
 import { Injectable, Logger } from '@nestjs/common'
 import { CreateMatchUseCase, CreateMatchUseCaseRequest } from '@/domain/use-cases/create-match'
-import { EventRowType, LogLineParser } from '@/infra/handlers/log-parser'
-import { CacheRepository } from '../cache/cache-repository'
+import { EventRowType, LogLineParser } from '@/application/handlers/log-parser'
+import { CacheRepository } from '@/infra/cache/cache-repository'
 import { Weapon } from '@/domain/entities/weapon'
 import { Player } from '@/domain/entities/player'
 import { Team } from '@/domain/entities/team'
@@ -27,7 +27,7 @@ export interface ProcessingResult {
 export class LogFileHandler {
   private readonly logger = new Logger(LogFileHandler.name)
 
-  private readonly batchSize = 1000
+  private readonly batchSize = 10
 
   constructor(
     private createMatch: CreateMatchUseCase,
@@ -35,10 +35,10 @@ export class LogFileHandler {
     private logLineParser: LogLineParser
   ) {}
 
-  public async parseLogFile(filePath: string, startLine = 0): Promise<ProcessingResult> {
+  public async parseLogFile(cloudFilePath: string, startLine = 0): Promise<ProcessingResult> {
     const startedTimestamp = new Date()
 
-    const fileResult = await this.readFile(filePath, startLine)
+    const fileResult = await this.readFile(cloudFilePath, startLine)
 
     const endedTimestamp = new Date()
 
@@ -52,10 +52,10 @@ export class LogFileHandler {
     }
   }
 
-  private async readFile(filePath: string, startLine: number): Promise<ReadFileResult> {
-    this.logger.debug(`Starting file read - path: ${filePath}`)
+  private async readFile(localDirectoryFilePath: string, startLine: number): Promise<ReadFileResult> {
+    this.logger.debug(`Starting file read - path: ${localDirectoryFilePath}`)
 
-    const fileStream = createReadStream(filePath)
+    const fileStream = createReadStream(localDirectoryFilePath)
     const rl = readline.createInterface({
       input: fileStream,
       crlfDelay: Infinity,
@@ -75,7 +75,7 @@ export class LogFileHandler {
     for await (const line of rl) {
       processedLines++
 
-      if (processedLines < startLine) continue // Pula linhas já processadas
+      if (processedLines < startLine) continue // step over if processed already
       if (line === '') continue
 
       const result = this.logLineParser.parse(line)
@@ -135,14 +135,12 @@ export class LogFileHandler {
       }
     }
 
-    // process remaining
     if (matches.length > 0) {
       await this.processBatchMatches(matches)
       lastMatchId = matches[matches.length - 1].id?.toString()
       processedMatches += matches.length
     }
 
-    // flush stream
     rl.close()
     fileStream.close()
 
@@ -156,15 +154,11 @@ export class LogFileHandler {
   private async processBatchMatches(matches: CreateMatchUseCaseRequest[]) {
     this.logger.log(`Processing batch with ${matches.length} matches...`)
 
-    for await (const match of matches) {
-      try {
-        await this.createMatch.execute(match)
-      } catch (error) {
-        this.logger.error(`Error processing match ${match.id}: ${error.message}`)
-
-        await this.cache.set(`log_file_handler:last_match_processed`, match.id)
-        break
-      }
+    try {
+      await Promise.all(matches.map((match) => this.createMatch.execute(match)))
+      await this.cache.set(`log_file_handler:last_match_processed`, matches[matches.length - 1].id)
+    } catch (error) {
+      this.logger.error(`Error processing matches identifiers: ${matches.join(',')}: ${error.message}`)
     }
 
     this.logger.log(`Batch processed!`)

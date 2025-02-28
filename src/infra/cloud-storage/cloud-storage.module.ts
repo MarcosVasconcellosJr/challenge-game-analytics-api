@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common'
 import { AWSS3Service } from './aws-s3.service'
 import { EnvModule } from 'src/infra/env/env.module'
-import { Uploader } from '@/domain/application/storage/uploader'
+import { CloudStorageService } from '@/domain/application/storage/cloud-storage'
 
 @Module({
   imports: [EnvModule],
   providers: [
     {
-      provide: Uploader,
+      provide: CloudStorageService,
       useClass: AWSS3Service,
     },
   ],
-  exports: [Uploader],
+  exports: [CloudStorageService],
 })
-export class StorageModule {}
+export class CloudStorageModule {}

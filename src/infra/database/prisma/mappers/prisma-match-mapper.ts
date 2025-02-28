@@ -6,7 +6,6 @@ import { Team } from '@/domain/entities/team'
 import { Prisma } from '@prisma/client'
 import { PlayersOnMatches } from '@/domain/entities/players-on-matches'
 
-// TODO: Automapper TS
 export class PrismaMatchMapper {
   static toDomain(raw: any): Match {
     const matchEvents = raw.matchEvents?.map(
@@ -19,25 +18,33 @@ export class PrismaMatchMapper {
           new Player(
             matchEvent.killerPlayer.name,
             new Team(matchEvent.killerPlayer.team.name, matchEvent.killerPlayer.team.id),
+            matchEvent.killerPlayer.team.id,
             matchEvent.killerPlayer.id
           ),
           new Player(
             matchEvent.victimPlayer.name,
             new Team(matchEvent.victimPlayer.team.name, matchEvent.victimPlayer.team.id),
+            matchEvent.victimPlayer.team.id,
             matchEvent.victimPlayer.id
           ),
           matchEvent.isWorldEvent,
-          raw.id
+          raw.id,
+          raw.createdAt
         )
     )
 
-    const match = new Match(raw.startedAt, raw.endedAt, matchEvents)
+    const match = new Match(raw.startedAt, raw.endedAt, matchEvents, null, raw.id)
 
     match.playersOnMatches = raw.playersOnMatches?.map(
       (playersOnMatch) =>
         new PlayersOnMatches(
           match,
-          new Player(playersOnMatch.player.name, new Team(playersOnMatch.player.team.name)),
+          new Player(
+            playersOnMatch.player.name,
+            new Team(playersOnMatch.player.team.name, playersOnMatch.player.team.id),
+            playersOnMatch.player.team.id,
+            playersOnMatch.player.id
+          ),
           playersOnMatch.killCount,
           playersOnMatch.friendlyKillCount,
           playersOnMatch.totalKillCount,
